@@ -1,9 +1,9 @@
-# Instalação — NexuFlow 1.5.5 Driver Edition
+# Instalação — NexuFlow 1.5.7 Visual Edition
 
 ## Para usar o aplicativo
 
-1. Extraia `NexuFlow-1.5.5-DriverEdition.zip` em uma pasta nova.
-2. Abra `NexuFlow-1.5.5-Setup.exe`.
+1. Extraia `NexuFlow-1.5.7-VisualEdition.zip` em uma pasta nova.
+2. Abra `NexuFlow-1.5.7-Setup.exe`.
 3. Conclua a instalação e abra o NexuFlow pelo Menu Iniciar.
 
 Não extraia por cima da pasta 1.4.2/1.5.0 e não copie arquivos manualmente. O instalador atualiza o aplicativo corretamente. Preferências compatíveis são migradas; a pasta antiga pode ser mantida temporariamente como backup.
@@ -12,7 +12,7 @@ Este build local ainda não possui certificado comercial, portanto o Windows pod
 
 ## Para abrir o código no VS Code
 
-1. Extraia `NexuFlow-1.5.5-DriverEdition-Source.zip` em uma pasta nova.
+1. Extraia `NexuFlow-1.5.7-VisualEdition-Source.zip` em uma pasta nova.
 2. Abra `NexuFlow.code-workspace`.
 3. No terminal do VS Code execute:
 

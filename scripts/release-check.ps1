@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path "$PSScriptRoot\.."
 Set-Location $Root
 
-$Version = '1.5.5'
-$ReleaseName = "NexuFlow-$Version-DriverEdition"
+$Version = '1.5.7'
+$ReleaseName = "NexuFlow-$Version-VisualEdition"
 foreach ($f in @('package.json','engine\pyproject.toml','src-tauri\Cargo.toml','src-tauri\tauri.conf.json')) {
   if (-not (Select-String -Path $f -SimpleMatch $Version -Quiet)) { throw "Version mismatch: $f" }
 }
@@ -32,7 +32,7 @@ if ($signature.Status -ne 'Valid') {
 }
 
 $consumerFiles = @(
-  'docs\INSTALL.md','docs\RELEASE_1.5.5.md','docs\ANTI_CHEAT.md',
+  'docs\INSTALL.md','docs\RELEASE_1.5.7.md','docs\ANTI_CHEAT.md',
   'docs\VALIDATION.md','docs\SAFETY.md','LICENSE','SBOM.cdx.json'
 )
 foreach ($item in $consumerFiles) {

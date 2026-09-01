@@ -4,6 +4,8 @@
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
   <div class="noise"></div>
+  <div class="theme-pattern" aria-hidden="true"></div>
+  <img class="theme-mascot" src="theme-art/flux-mascot.png" alt="" aria-hidden="true">
 
   <div class="hotbar glass" aria-label="Barra rápida de navegação">
     <button type="button" (click)="scrollToTop()" aria-label="Ir para o topo" title="Topo">↑</button>
@@ -50,6 +52,7 @@
       <button [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><span>◈</span> Dashboard</button>
       <button [class.active]="tab === 'games'" (click)="setTab('games')"><span>⌁</span> Jogos</button>
       <button [class.active]="tab === 'history'" (click)="setTab('history')"><span>◷</span> Histórico</button>
+      <button [class.active]="tab === 'appearance'" (click)="setTab('appearance')"><span>◉</span> Aparência</button>
       <button [class.active]="tab === 'settings'" (click)="setTab('settings')"><span>⚙</span> Ajustes</button>
     </nav>
 
@@ -65,30 +68,51 @@
       <div class="live-pill" [class.offline]="telemetry && !telemetry.engine_online"><i></i> {{ telemetry?.engine_online ? 'LIVE' : 'ENGINE OFFLINE' }}</div>
     </header>
 
-    <section class="hero glass">
-      <div class="hero-copy">
-        <span class="eyebrow">{{ boosted ? 'SISTEMA OTIMIZADO' : 'ONE-CLICK PERFORMANCE' }}</span>
-        <div class="detected-title"><img *ngIf="telemetry?.active_game" [src]="gameIcon(telemetry.active_game_id)" alt=""><h2>{{ telemetry?.active_game ? telemetry.active_game + ' detectado' : 'Destrave sua melhor conexão.' }}</h2></div>
-        <p aria-live="polite">{{ message }}</p>
-      </div>
-
-      <div class="boost-stage">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <span class="particle" *ngFor="let p of [1,2,3,4,5,6,7,8,9,10,11,12]"></span>
-        <button class="boost-button" [class.engaged]="boosted" [class.busy]="busy" (click)="toggleBoost()" [disabled]="busy || !telemetry?.engine_online">
-          <span class="rim"></span>
-          <span class="button-core">
-            <small>{{ busy ? 'PROCESSANDO' : boosted ? 'STATUS' : 'PRESSIONE PARA' }}</small>
-            <strong>{{ boosted ? 'OTIMIZADO' : 'NEXUFLOW BOOST' }}</strong>
-            <em>{{ effectiveProfileLabel }}</em>
-          </span>
+    <section class="focus-dashboard glass">
+      <div class="boost-control">
+        <button class="boost-orb" [class.engaged]="boosted" [class.busy]="busy" (click)="toggleBoost()" [disabled]="busy || !telemetry?.engine_online" [attr.aria-label]="boosted ? 'Desativar NexuFlow Boost' : 'Ativar NexuFlow Boost'">
+          <span class="boost-bolt">ϟ</span>
+          <strong>{{ busy ? 'AGUARDE' : boosted ? 'ATIVO' : 'BOOST' }}</strong>
+          <small>{{ boosted ? 'clique para restaurar' : 'clique para otimizar' }}</small>
         </button>
       </div>
 
-      <div class="hero-side">
-        <div><small>PERFIL EFETIVO</small><b>{{ effectiveProfileLabel }}</b></div>
-        <div><small>NEXUS SCORE</small><b>{{ telemetry?.nexus_score ?? 0 }} / 100</b></div>
-        <div><small>JOGO</small><b>{{ telemetry?.active_game || 'Auto-detect' }}</b></div>
+      <div class="focus-summary">
+        <div class="focus-heading">
+          <div class="active-identity">
+            <img [src]="gameIcon(telemetry?.active_game_id)" alt="">
+            <div><small>{{ telemetry?.active_game ? 'JOGO DETECTADO' : 'DETECÇÃO AUTOMÁTICA' }}</small><b>{{ telemetry?.active_game || 'Pronto para o próximo jogo' }}</b></div>
+          </div>
+          <span class="profile-chip">{{ effectiveProfileLabel }}</span>
+        </div>
+
+        <div class="score-focus">
+          <strong>{{ telemetry?.nexus_score ?? 0 }}</strong><span>/100 Nexus Score</span>
+          <em>{{ telemetry?.quality_grade || 'Analisando qualidade' }}</em>
+        </div>
+        <p class="focus-message" aria-live="polite">{{ message }}</p>
+        <div class="signal-chips">
+          <span>Jitter <b>{{ telemetry?.jitter_ms ?? '—' }} ms</b></span>
+          <span>Perda <b>{{ telemetry?.packet_loss_percent ?? '—' }}%</b></span>
+          <span>Janela <b>{{ telemetry?.quality_window_seconds ?? 0 | number:'1.0-0' }} s</b></span>
+        </div>
+      </div>
+
+      <div class="quick-metrics" aria-label="Métricas principais">
+        <article><small>LATÊNCIA</small><b>{{ telemetry?.ping_ms ?? '—' }}<em>ms</em></b><span>Agora na conexão</span></article>
+        <article><small>CPU / RAM</small><b>{{ telemetry?.cpu_percent ?? 0 | number:'1.0-0' }}<em>%</em></b><span>RAM {{ telemetry?.memory_percent ?? 0 | number:'1.0-0' }}%</span></article>
+        <article><small>GPU</small><b>{{ telemetry?.gpu_utilization ?? 0 | number:'1.0-0' }}<em>%</em></b><span>{{ telemetry?.gpu_temperature_c ?? '—' }} °C</span></article>
+      </div>
+
+      <div class="lag-glance" *ngIf="telemetry?.latency_budget as budget">
+        <div class="lag-glance-head"><span>De onde pode estar vindo o lag</span><b>confiança {{ confidenceLabel(budget.verdict?.confidence) }}</b></div>
+        <div class="lag-glance-grid">
+          <article [ngClass]="latencyStatusTone(budget.domains?.['connection_or_local_network']?.status)"><i></i><small>CONEXÃO</small><b>{{ latencyStatusLabel(budget.domains?.['connection_or_local_network']?.status) }}</b></article>
+          <article [ngClass]="latencyStatusTone(budget.domains?.['route_or_isp']?.status)"><i></i><small>ROTA / ISP</small><b>{{ latencyStatusLabel(budget.domains?.['route_or_isp']?.status) }}</b></article>
+          <article [ngClass]="latencyStatusTone(budget.domains?.['pc_or_driver_pressure']?.status)"><i></i><small>PC / DRIVER</small><b>{{ latencyStatusLabel(budget.domains?.['pc_or_driver_pressure']?.status) }}</b></article>
+          <article [ngClass]="latencyStatusTone(budget.domains?.['server_or_game_specific']?.status)"><i></i><small>SERVIDOR</small><b>{{ latencyStatusLabel(budget.domains?.['server_or_game_specific']?.status) }}</b></article>
+        </div>
+        <p><b>{{ latencyAreaLabel(budget.verdict?.primary_area) }}:</b> {{ budget.verdict?.summary }}</p>
       </div>
     </section>
 
@@ -106,53 +130,6 @@
       <div class="boost-transparency-grid">
         <div><small>ATIVO E PERMITIDO</small><span *ngFor="let item of selectedAllowedFeatures">✓ {{ item }}</span></div>
         <div><small>BLOQUEADO PELO SAFE CORE</small><span *ngFor="let item of selectedBlockedFeatures">× {{ item }}</span></div>
-      </div>
-    </section>
-
-    <section class="metric-grid">
-      <article class="metric glass score">
-        <div class="metric-head"><span><i></i>NEXUS SCORE</span><strong>{{ telemetry?.nexus_score ?? 0 }}<small>/100</small></strong></div>
-        <app-sparkline [values]="networkSeries" gradientId="scoreGradient"></app-sparkline>
-        <footer><span>{{ telemetry?.quality_grade || '—' }}</span><b>{{ telemetry?.quality_window_seconds ?? 0 | number:'1.0-0' }} s janela</b></footer>
-      </article>
-      <article class="metric glass ping">
-        <div class="metric-head"><span><i></i>LATÊNCIA</span><strong>{{ telemetry?.ping_ms ?? '—' }}<small> ms</small></strong></div>
-        <app-sparkline [values]="pingSeries" gradientId="pingGradient"></app-sparkline>
-        <footer><span>Antes {{ qualityBefore?.latency_ms ?? '—' }} ms</span><b>Depois {{ qualityAfter?.latency_ms ?? telemetry?.ping_ms ?? '—' }} ms</b></footer>
-      </article>
-      <article class="metric glass network">
-        <div class="metric-head"><span><i></i>JITTER / LOSS</span><strong>{{ telemetry?.jitter_ms ?? '—' }}<small> ms</small></strong></div>
-        <div class="quality-duo"><div><small>LOSS</small><b>{{ telemetry?.packet_loss_percent ?? '—' }}%</b></div><div><small>ALVO</small><b>{{ telemetry?.quality_target || '—' }}</b></div></div>
-        <footer><span>Adaptive</span><b>{{ telemetry?.session_quality?.adaptive_events ?? 0 }} eventos</b></footer>
-      </article>
-      <article class="metric glass cpu">
-        <div class="metric-head"><span><i></i>CPU / RAM</span><strong>{{ telemetry?.cpu_percent ?? 0 | number:'1.0-0' }}<small>%</small></strong></div>
-        <app-sparkline [values]="cpuSeries" gradientId="cpuGradient"></app-sparkline>
-        <footer><span>RAM {{ telemetry?.memory_used_gb ?? 0 | number:'1.1-1' }} / {{ telemetry?.memory_total_gb ?? 0 | number:'1.0-0' }} GB</span><b>{{ telemetry?.memory_percent ?? 0 | number:'1.0-0' }}%</b></footer>
-      </article>
-      <article class="metric glass gpu">
-        <div class="metric-head"><span><i></i>GPU</span><strong>{{ telemetry?.gpu_utilization ?? 0 | number:'1.0-0' }}<small>%</small></strong></div>
-        <app-sparkline [values]="gpuSeries" gradientId="gpuGradient"></app-sparkline>
-        <footer><span>{{ telemetry?.gpu_temperature_c ?? '—' }} °C</span><b class="ellipsis">{{ telemetry?.gpu_name || 'Não detectado' }}</b></footer>
-      </article>
-      <article class="metric glass game">
-        <div class="metric-head"><span><i></i>JOGO ATIVO</span><strong class="text-value">{{ telemetry?.active_game ? 'ON' : 'AUTO' }}</strong></div>
-        <div class="game-live">
-          <span class="game-live-icon"><img [src]="gameIcon(telemetry?.active_game_id)" alt=""></span>
-          <div><b>{{ telemetry?.active_game || 'Aguardando jogo' }}</b><small>{{ telemetry?.active_game ? effectiveProfileLabel : 'Roblox • VALORANT • CS2 • LoL' }}</small></div>
-        </div>
-        <footer><span>Detecção</span><b>{{ telemetry?.active_game ? 'ativa' : 'automática' }}</b></footer>
-      </article>
-    </section>
-
-    <section class="latency-lab glass" *ngIf="telemetry?.latency_budget as budget">
-      <div class="section-title"><div><span class="eyebrow">NEXUS LATENCY LAB</span><h2>De onde pode estar vindo o lag?</h2><p class="section-subtitle">Diagnóstico por evidências — não inventa milissegundos nem culpa o servidor sem prova.</p></div><span class="confidence-chip">confiança {{ confidenceLabel(budget.verdict?.confidence) }}</span></div>
-      <div class="latency-verdict"><small>SINAL PRINCIPAL</small><b>{{ latencyAreaLabel(budget.verdict?.primary_area) }}</b><span>{{ budget.verdict?.summary }}</span></div>
-      <div class="latency-domains">
-        <div><small>CONEXÃO</small><b>{{ latencyStatusLabel(budget.domains?.['connection_or_local_network']?.status) }}</b></div>
-        <div><small>ROTA / ISP</small><b>{{ latencyStatusLabel(budget.domains?.['route_or_isp']?.status) }}</b></div>
-        <div><small>PC / DRIVER</small><b>{{ latencyStatusLabel(budget.domains?.['pc_or_driver_pressure']?.status) }}</b></div>
-        <div><small>SERVIDOR</small><b>{{ latencyStatusLabel(budget.domains?.['server_or_game_specific']?.status) }}</b></div>
       </div>
     </section>
 
@@ -203,6 +180,62 @@
     </section>
   </section>
 
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'appearance'">
+    <header class="topbar appearance-topbar">
+      <div><small>IDENTIDADE NEXUFLOW</small><h1>Aparência</h1></div>
+      <button class="ghost" type="button" (click)="resetUiPreferences()">Restaurar padrão</button>
+    </header>
+
+    <section class="appearance-studio glass">
+      <div class="appearance-intro">
+        <div><span class="eyebrow">VISUAL EDITION</span><h2>Um NexuFlow com a sua energia.</h2><p>Temas originais, rápidos e guardados só neste computador. Nenhum tema muda o motor, a rede ou a proteção anticheat.</p></div>
+        <div class="appearance-tabs" role="tablist" aria-label="Seções de aparência">
+          <button type="button" role="tab" [attr.aria-selected]="appearanceSection === 'themes'" [class.active]="appearanceSection === 'themes'" (click)="setAppearanceSection('themes')">Temas</button>
+          <button type="button" role="tab" [attr.aria-selected]="appearanceSection === 'accessibility'" [class.active]="appearanceSection === 'accessibility'" (click)="setAppearanceSection('accessibility')">Acessibilidade</button>
+        </div>
+      </div>
+
+      <div class="theme-gallery" *ngIf="appearanceSection === 'themes'" role="tabpanel">
+        <div class="theme-group-title"><div><small>COLEÇÃO NEXUFLOW</small><b>Assinaturas da marca</b></div><span>{{ themeLabel }} ativo</span></div>
+        <div class="theme-gallery-grid" role="group" aria-label="Temas NexuFlow">
+          <button type="button" class="theme-tile nebula" [class.selected]="uiTheme === 'nebula'" (click)="setTheme('nebula')"><i class="theme-swatch"><em></em></i><span><b>Nebula</b><small>Violeta elétrico</small></span><strong>{{ uiTheme === 'nebula' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile midnight" [class.selected]="uiTheme === 'midnight'" (click)="setTheme('midnight')"><i class="theme-swatch"><em></em></i><span><b>Midnight</b><small>Azul silencioso</small></span><strong>{{ uiTheme === 'midnight' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile emerald" [class.selected]="uiTheme === 'emerald'" (click)="setTheme('emerald')"><i class="theme-swatch"><em></em></i><span><b>Emerald</b><small>Verde de fluxo</small></span><strong>{{ uiTheme === 'emerald' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile contrast" [class.selected]="uiTheme === 'high-contrast'" (click)="setTheme('high-contrast')"><i class="theme-swatch"><em></em></i><span><b>Alto contraste</b><small>Leitura máxima</small></span><strong>{{ uiTheme === 'high-contrast' ? 'ATIVO' : 'USAR' }}</strong></button>
+        </div>
+
+        <div class="theme-group-title inspired"><div><small>ATMOSFERAS DE JOGO</small><b>Arte original, não afiliado</b></div><span>Sem logos ou personagens de terceiros</span></div>
+        <div class="theme-gallery-grid inspired-grid" role="group" aria-label="Temas de atmosfera original">
+          <button type="button" class="theme-tile blocks" [class.selected]="uiTheme === 'blocks'" (click)="setTheme('blocks')"><i class="theme-swatch"><em></em></i><span><b>Blocos</b><small>Sandbox colorido</small></span><strong>{{ uiTheme === 'blocks' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile relic" [class.selected]="uiTheme === 'relic'" (click)="setTheme('relic')"><i class="theme-swatch"><em></em></i><span><b>Relíquia</b><small>Azul e ouro</small></span><strong>{{ uiTheme === 'relic' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile tactical" [class.selected]="uiTheme === 'tactical'" (click)="setTheme('tactical')"><i class="theme-swatch"><em></em></i><span><b>Tático</b><small>Ângulos e precisão</small></span><strong>{{ uiTheme === 'tactical' ? 'ATIVO' : 'USAR' }}</strong></button>
+          <button type="button" class="theme-tile operation" [class.selected]="uiTheme === 'operation'" (click)="setTheme('operation')"><i class="theme-swatch"><em></em></i><span><b>Operação</b><small>Blueprint competitivo</small></span><strong>{{ uiTheme === 'operation' ? 'ATIVO' : 'USAR' }}</strong></button>
+        </div>
+
+        <div class="flux-story">
+          <div><span class="eyebrow">CONHEÇA O FLUX</span><h3>O espírito da conexão.</h3><p>Um mascote criado do zero para o NexuFlow. Ele muda de atmosfera com o tema, sempre discreto para não atrapalhar a leitura.</p></div>
+          <img src="theme-art/flux-mascot.png" alt="Flux, mascote abstrato original do NexuFlow">
+        </div>
+      </div>
+
+      <div class="accessibility-studio" *ngIf="appearanceSection === 'accessibility'" role="tabpanel">
+        <div class="accessibility-control-card font-control">
+          <div><small>TAMANHO DO TEXTO</small><b>{{ fontScale }}%</b><p>Ajusta títulos, botões, métricas e explicações sem aplicar zoom na janela.</p></div>
+          <input type="range" min="90" max="125" step="5" [ngModel]="fontScale" (ngModelChange)="setFontScale($event)" aria-label="Tamanho do texto">
+          <div class="font-actions"><button type="button" (click)="bumpFont(-5)">A−</button><button type="button" (click)="setFontScale(100)">100%</button><button type="button" (click)="bumpFont(5)">A+</button></div>
+        </div>
+        <button type="button" class="accessibility-control-card motion-card-wide" [class.enabled]="reducedMotion" (click)="toggleReducedMotion()">
+          <div><small>MOVIMENTO</small><b>{{ reducedMotion ? 'Movimento reduzido' : 'Animações suaves' }}</b><p>{{ reducedMotion ? 'Transições decorativas desativadas.' : 'Entradas e respostas curtas, sem animação pesada contínua.' }}</p></div><i></i>
+        </button>
+        <button type="button" class="accessibility-control-card contrast-shortcut" (click)="setTheme('high-contrast')">
+          <div><small>LEITURA</small><b>Ativar alto contraste</b><p>Remove arte de fundo e reforça bordas, foco e diferença entre textos.</p></div><span>→</span>
+        </button>
+        <div class="accessibility-preview" aria-label="Prévia do tamanho do texto"><small>PRÉVIA AO VIVO</small><b>Informação clara sem quebrar o layout.</b><p>Ping, CPU, memória, avisos e botões usam a mesma escala escolhida acima.</p></div>
+        <div class="shortcut-note"><b>Atalhos:</b> Alt+1 Dashboard · Alt+2 Jogos · Alt+3 Histórico · Alt+4 Aparência · Alt+5 Ajustes · Esc fecha o painel rápido.</div>
+      </div>
+    </section>
+  </section>
+
   <section id="app-content" class="content page-enter" *ngIf="tab === 'settings'">
     <header class="topbar"><div><small>POLÍTICA DE OTIMIZAÇÃO</small><h1>Ajustes do Sistema</h1></div></header>
     <section class="panel glass settings-panel">
@@ -231,40 +264,15 @@
         <button class="ghost" type="button" (click)="exportSessionReport()">Exportar relatório da sessão</button>
       </div>
 
-      <div class="appearance-card">
-        <div class="section-title"><div><span class="eyebrow">VISUAL & ACESSIBILIDADE</span><h2>Seu NexuFlow, do seu jeito</h2></div><button class="ghost" type="button" (click)="resetUiPreferences()">Restaurar padrão</button></div>
-        <div class="appearance-grid">
-          <div class="theme-picker">
-            <small>TEMA</small>
-            <div class="theme-options" role="group" aria-label="Escolha de tema">
-              <button type="button" class="theme-option nebula" [class.selected]="uiTheme === 'nebula'" (click)="setTheme('nebula')"><i></i><span>Nebula</span></button>
-              <button type="button" class="theme-option midnight" [class.selected]="uiTheme === 'midnight'" (click)="setTheme('midnight')"><i></i><span>Midnight</span></button>
-              <button type="button" class="theme-option emerald" [class.selected]="uiTheme === 'emerald'" (click)="setTheme('emerald')"><i></i><span>Emerald</span></button>
-              <button type="button" class="theme-option contrast" [class.selected]="uiTheme === 'high-contrast'" (click)="setTheme('high-contrast')"><i></i><span>Alto contraste</span></button>
-            </div>
-          </div>
-          <div class="access-setting">
-            <div><small>TAMANHO DO TEXTO</small><b>{{ fontScale }}%</b></div>
-            <input type="range" min="90" max="125" step="5" [ngModel]="fontScale" (ngModelChange)="setFontScale($event)" aria-label="Tamanho do texto">
-            <div class="font-actions"><button type="button" (click)="bumpFont(-5)">A−</button><button type="button" (click)="bumpFont(5)">A+</button></div>
-          </div>
-          <button type="button" class="access-setting motion-card" [class.enabled]="reducedMotion" (click)="toggleReducedMotion()">
-            <div><small>MOVIMENTO</small><b>{{ reducedMotion ? 'Reduzido' : 'Suave' }}</b></div>
-            <span>{{ reducedMotion ? 'Transições essenciais apenas.' : 'Animações leves por GPU, sem efeitos pesados.' }}</span><i></i>
-          </button>
-        </div>
-        <div class="shortcut-note"><b>Atalhos:</b> Alt+1 Dashboard · Alt+2 Jogos · Alt+3 Histórico · Alt+4 Ajustes · Esc fecha o painel rápido.</div>
-      </div>
-
       <div class="security-ux-card">
         <div><span class="eyebrow">DESKTOP CLEAN MODE</span><h3>Sem janela CMD no aplicativo instalado</h3><p>O sidecar empacotado usa IPC por arquivo e build windowless. Ao desligar uma otimização ativa, o próprio helper elevado faz o rollback sem pedir uma segunda confirmação do Windows.</p></div>
-        <div class="security-pill"><b>Uma autorização ao abrir</b><span>A 1.5.5 pede a permissão do Windows uma vez por execução. Ativar e desativar não deve repetir a janela enquanto o NexuFlow estiver aberto.</span><button type="button" class="learn-link" (click)="openLearnMore('uac')">Entenda o “Sim ou Não” <b>→</b></button></div>
+        <div class="security-pill"><b>Uma autorização ao abrir</b><span>Desde a 1.5.5, a permissão do Windows é solicitada uma vez por execução. Ativar e desativar não deve repetir a janela enquanto o NexuFlow estiver aberto.</span><button type="button" class="learn-link" (click)="openLearnMore('uac')">Entenda o “Sim ou Não” <b>→</b></button></div>
       </div>
 
       <div class="driver-center health-card">
         <div class="section-title">
           <div><span class="eyebrow">DRIVER EDITION • WINDOWS UPDATE</span><h2>Central de drivers</h2><p class="section-subtitle">Procura atualizações oferecidas pela Microsoft. O NexuFlow não baixa pacote de site desconhecido e não instala nada sozinho.</p></div>
-          <span class="confidence-chip">1.5.5</span>
+          <span class="confidence-chip">1.5.7</span>
         </div>
         <div class="driver-summary" [class.has-updates]="(driverReport?.updates_offered || 0) > 0">
           <div><small>STATUS</small><b>{{ driverStatusLabel }}</b><span>{{ driverMessage }}</span></div>
@@ -297,7 +305,7 @@
       </div>
 
       <div class="latency-lab health-card">
-        <div class="section-title"><div><span class="eyebrow">SAFE PERFORMANCE LAB</span><h2>Rede, Windows e microtravadas</h2><p class="section-subtitle">Leitura oficial do Windows, sem driver próprio e sem tocar no processo do jogo.</p></div><span class="confidence-chip">1.5.5</span></div>
+        <div class="section-title"><div><span class="eyebrow">SAFE PERFORMANCE LAB</span><h2>Rede, Windows e microtravadas</h2><p class="section-subtitle">Leitura oficial do Windows, sem driver próprio e sem tocar no processo do jogo.</p></div><span class="confidence-chip">1.5.7</span></div>
         <div class="lab-grid">
           <article>
             <small>PLACA DE REDE</small><b>{{ gamingHealth.nic_health?.['deferred'] ? 'Adiado pelo anticheat' : gamingHealth.nic_health?.['available'] ? 'Diagnóstico pronto' : 'Indisponível' }}</b>

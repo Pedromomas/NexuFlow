@@ -13,10 +13,10 @@ import {
   Telemetry
 } from './core/models';
 import { NexusService } from './core/nexus.service';
-import { SparklineComponent } from './shared/sparkline.component';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'settings';
-type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast';
+type Tab = 'dashboard' | 'games' | 'history' | 'appearance' | 'settings';
+type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation';
+type AppearanceSection = 'themes' | 'accessibility';
 type LearnTopic = 'ping' | 'pc' | 'complete' | 'hardcore_safe' | 'uac';
 
 interface LearnMoreContent {
@@ -30,7 +30,7 @@ interface LearnMoreContent {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonApp, SparklineComponent],
+  imports: [CommonModule, FormsModule, IonApp],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -60,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
   fontScale = 100;
   reducedMotion = false;
   accessibilityOpen = false;
+  appearanceSection: AppearanceSection = 'themes';
   learnTopic: LearnTopic | null = null;
   private timer?: ReturnType<typeof setInterval>;
   private tick = 0;
@@ -116,6 +117,11 @@ export class AppComponent implements OnInit, OnDestroy {
     if (tab === 'history') void this.refreshHistory();
     if (tab === 'settings') void this.refreshHealth();
     queueMicrotask(() => this.scrollToTop());
+  }
+
+  setAppearanceSection(section: AppearanceSection): void {
+    this.appearanceSection = section;
+    this.cdr.markForCheck();
   }
 
   setProfile(profile: BoostProfile): void {
@@ -247,7 +253,7 @@ export class AppComponent implements OnInit, OnDestroy {
       uac: {
         title: 'Por que o Windows pede “Sim ou Não”?',
         intro: 'É a proteção UAC do Windows confirmando que o NexuFlow pode fazer ajustes administrativos reversíveis.',
-        does: ['Na 1.5.5, a autorização é solicitada uma vez ao abrir o aplicativo.', 'Enquanto o aplicativo permanecer aberto, ativar e desativar não deve repetir a pergunta.', 'O rollback continua funcionando com a mesma autorização.'],
+        does: ['Desde a 1.5.5, a autorização é solicitada uma vez ao abrir o aplicativo.', 'Enquanto o aplicativo permanecer aberto, ativar e desativar não deve repetir a pergunta.', 'O rollback continua funcionando com a mesma autorização.'],
         doesNot: ['O NexuFlow não desliga nem contorna o UAC.', '“Fornecedor desconhecido” só desaparece quando o executável recebe uma assinatura digital comercial válida.', 'Cancelar a autorização impede os ajustes administrativos.']
       }
     };
@@ -311,6 +317,14 @@ export class AppComponent implements OnInit, OnDestroy {
       deferred: 'adiado durante o jogo'
     };
     return labels[String(value || '')] ?? 'coletando';
+  }
+
+  latencyStatusTone(value?: string): 'good' | 'warning' | 'danger' | 'neutral' {
+    const status = String(value || '');
+    if (status === 'no_issue_observed' || status === 'enabled') return 'good';
+    if (status === 'degradation_observed' || status === 'pressure_observed') return 'danger';
+    if (status === 'insufficient_data' || status === 'deferred' || status === 'not_exposed_by_driver') return 'warning';
+    return 'neutral';
   }
 
   confidenceLabel(value?: string): string {
@@ -380,7 +394,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   exportSessionReport(): void {
     const safe = {
-      schema: 3, product: 'NexuFlow 1.5.5 Driver Edition', exported_at: new Date().toISOString(),
+      schema: 3, product: 'NexuFlow 1.5.7 Visual Edition', exported_at: new Date().toISOString(),
       requested_profile: this.profile, effective_profile: this.telemetry?.effective_profile ?? null,
       objective_mode: this.telemetry?.objective_mode ?? this.boostObjective(),
       game_id: this.telemetry?.active_game_id ?? null, quality: this.telemetry?.session_quality ?? null,
@@ -406,7 +420,11 @@ export class AppComponent implements OnInit, OnDestroy {
       nebula: 'Nebula',
       midnight: 'Midnight',
       emerald: 'Emerald',
-      'high-contrast': 'Alto contraste'
+      'high-contrast': 'Alto contraste',
+      blocks: 'Blocos',
+      relic: 'Relíquia',
+      tactical: 'Tático',
+      operation: 'Operação'
     };
     return labels[this.uiTheme];
   }
@@ -487,7 +505,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     if (!event.altKey) return;
-    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'settings' };
+    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'appearance', '5': 'settings' };
     const tab = tabs[event.key];
     if (tab) {
       event.preventDefault();
@@ -502,7 +520,7 @@ export class AppComponent implements OnInit, OnDestroy {
       const raw = localStorage.getItem(this.uiPrefsKey);
       if (raw) {
         const prefs = JSON.parse(raw) as { theme?: UiTheme; fontScale?: number; reducedMotion?: boolean };
-        if (['nebula', 'midnight', 'emerald', 'high-contrast'].includes(String(prefs.theme))) {
+        if (['nebula', 'midnight', 'emerald', 'high-contrast', 'blocks', 'relic', 'tactical', 'operation'].includes(String(prefs.theme))) {
           this.uiTheme = prefs.theme as UiTheme;
         }
         this.fontScale = Math.min(125, Math.max(90, Number(prefs.fontScale) || 100));

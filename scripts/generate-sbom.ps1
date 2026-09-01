@@ -14,6 +14,6 @@ foreach ($r in $requirements) {
   $reqName = [string](($req -split '[<>=~!]')[0])
   [void]$components.Add([pscustomobject][ordered]@{ type='library'; name=$reqName; version=$req; purl="pkg:pypi/$reqName" })
 }
-$doc = [pscustomobject][ordered]@{ bomFormat='CycloneDX'; specVersion='1.5'; serialNumber="urn:uuid:$([guid]::NewGuid())"; version=1; metadata=[pscustomobject][ordered]@{ component=[pscustomobject][ordered]@{ type='application'; name='NexuFlow'; version='1.5.5' } }; components=$components }
+$doc = [pscustomobject][ordered]@{ bomFormat='CycloneDX'; specVersion='1.5'; serialNumber="urn:uuid:$([guid]::NewGuid())"; version=1; metadata=[pscustomobject][ordered]@{ component=[pscustomobject][ordered]@{ type='application'; name='NexuFlow'; version='1.5.7' } }; components=$components }
 $doc | ConvertTo-Json -Depth 8 | Set-Content $Out -Encoding utf8
 Write-Host "SBOM: $Out ($($components.Count) components)"

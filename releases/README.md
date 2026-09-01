@@ -1,5 +1,7 @@
 # Histórico de versões
 
+- [`v1.5.7 — Visual Edition`](v1.5.7-VisualEdition/README.md) — oito temas originais, Flux, Aparência separada, acessibilidade e Dashboard redesenhado.
+
 Este diretório preserva a história pública do NexuFlow sem duplicar instaladores e dependências no repositório.
 
 Cada pasta explica o marco daquela versão. Os arquivos de instalação, SBOMs e hashes ficam anexados à respectiva **GitHub Release privada**. Assim o repositório continua rápido para abrir no VS Code e cada download permanece verificável.

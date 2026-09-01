@@ -222,7 +222,7 @@ async fn privileged_job(app: &AppHandle, action: &str, profile: &str) -> Result<
         .spawn()
         .map_err(|e| format!("Cannot launch privileged helper: {e}"))?;
 
-    // The packaged 1.5.5 host requests elevation once at application launch,
+    // The packaged host requests elevation once at application launch,
     // so this sidecar inherits that token and does not create a new prompt for
     // each BOOST. The engine still keeps its own elevation check as a fail-safe
     // for unsupported/manual launch paths. UAC is never disabled or bypassed.

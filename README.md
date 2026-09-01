@@ -9,7 +9,7 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão atual: 1.5.5 — Driver Edition**
+**Versão atual: 1.5.7 — Visual Edition**
 
 </div>
 
@@ -23,6 +23,7 @@
 | ⚡ **PC** | Saúde de CPU, RAM, GPU, energia e sinais de stutter. |
 | 🛡 **Jogos protegidos** | Políticas fail-closed para Riot, Valve, EAC e BattlEye. |
 | 🚗 **Driver Center** | Consulta sob demanda ao Windows Update; nunca baixa ou instala drivers sozinho. |
+| 🎨 **Visual Edition** | Oito temas originais, mascote próprio, acessibilidade e Dashboard com hierarquia clara. |
 | 🔎 **Transparência** | Histórico local, relatórios exportáveis e explicação clara de cada modo. |
 
 ## 🎮 Recursos principais
@@ -31,6 +32,8 @@
 - **Ping, PC, Completo e Hardcore Safe:** modos independentes para que o usuário saiba exatamente o que cada escolha faz.
 - **Protected Session Shield:** sessão protegida limita o NexuFlow a ações compatíveis e bloqueia superfícies arriscadas.
 - **Central de Drivers 1.5.5:** mostra atualizações que o próprio Windows oferece e encaminha para a tela oficial de atualizações opcionais.
+- **Aparência 1.5.7:** galeria independente com Nebula, Midnight, Emerald, Alto Contraste, Blocos, Relíquia, Tático e Operação.
+- **Flux:** mascote original do NexuFlow, sem personagens, logos ou arte de terceiros.
 - **Privacy by default:** dados ficam locais; não há telemetria externa obrigatória.
 
 > **Compromisso de segurança:** o NexuFlow não instala driver próprio, não intercepta tráfego, não injeta código, não altera memória de jogos e não tenta substituir a infraestrutura global de relay de serviços como ExitLag ou NoPing.
@@ -121,6 +124,14 @@ O NexuFlow mostra, sem sair desligando serviços indiscriminadamente:
 - plano de energia atual e alimentação AC.
 
 Thermal throttling de CPU não é inventado: sem telemetria específica do fabricante, o app reporta apenas sinais compatíveis/possíveis.
+
+## Visual Edition 1.5.7
+
+Aparência agora é uma área própria da barra lateral, separada dos ajustes do sistema. Os quatro temas de atmosfera são criações originais e aparecem identificados como **“arte original, não afiliado”**. Nenhum tema usa personagem, logo, mapa ou splash art de Roblox, Riot ou Valve.
+
+O Dashboard foi reorganizado para destacar Nexus Score, latência, CPU/RAM e GPU, mostrar o jogo uma única vez e diferenciar visualmente os quatro sinais de origem do lag. “Confiança sem conclusão” continua visível quando os dados não permitem afirmar uma causa.
+
+Animações usam somente opacidade e transformação curta, respeitam a opção Movimento reduzido e não adicionam polling, acesso a processo, rede ou anticheat.
 
 ## Driver Center 1.5.5
 
