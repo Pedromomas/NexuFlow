@@ -429,6 +429,30 @@ export class AppComponent implements OnInit, OnDestroy {
     return labels[this.uiTheme];
   }
 
+  get gamesNavigationIcon(): string {
+    const themedIcons: Partial<Record<UiTheme, string>> = {
+      blocks: 'icon-cubes',
+      relic: 'icon-relic',
+      tactical: 'icon-tactical',
+      operation: 'icon-operation'
+    };
+    return themedIcons[this.uiTheme] ?? 'icon-gamepad';
+  }
+
+  get themeSignatureIcon(): string {
+    const icons: Record<UiTheme, string> = {
+      nebula: 'icon-orbit',
+      midnight: 'icon-moon',
+      emerald: 'icon-leaf',
+      'high-contrast': 'icon-contrast',
+      blocks: 'icon-cubes',
+      relic: 'icon-relic',
+      tactical: 'icon-tactical',
+      operation: 'icon-operation'
+    };
+    return icons[this.uiTheme];
+  }
+
   setTheme(theme: UiTheme): void {
     this.uiTheme = theme;
     this.applyUiPreferences();

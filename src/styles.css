@@ -317,3 +317,66 @@ nav button{font-size:calc(13px * var(--font-scale))}.brand strong{font-size:calc
 @media(max-width:1050px){.focus-dashboard{grid-template-columns:155px minmax(0,1fr)}.boost-orb{width:132px;height:132px}.theme-gallery-grid{grid-template-columns:repeat(2,1fr)}.theme-mascot{width:48vw;opacity:.03}.theme-pattern{left:82px}}
 @media(max-width:1000px){.sidebar nav button{font-size:0}.sidebar nav button span{font-size:16px}.sidebar nav button.active{box-shadow:inset 2px 0 var(--accent)}}
 @media(max-width:760px){.focus-dashboard{grid-template-columns:1fr;padding:20px}.boost-control{grid-row:auto}.focus-summary,.quick-metrics{grid-column:1}.focus-heading{align-items:flex-start}.profile-chip{max-width:48%}.quick-metrics{grid-template-columns:1fr 1fr}.quick-metrics article:last-child{grid-column:1/-1}.lag-glance-grid{grid-template-columns:1fr 1fr}.appearance-intro{align-items:stretch;flex-direction:column}.appearance-tabs{align-self:flex-start}.theme-gallery-grid,.accessibility-studio{grid-template-columns:1fr}.theme-group-title{align-items:flex-start;flex-direction:column}.flux-story{grid-template-columns:1fr;height:auto;min-height:260px}.flux-story img{position:absolute;right:-35px;bottom:-70px;opacity:.25}.accessibility-studio .shortcut-note{grid-column:1}.theme-mascot{display:none}}
+
+/* 1.5.7 identity pass — vector icon system and theme-shaped UI. */
+:root{--shell-radius:24px;--nav-radius:13px;--icon-radius:10px;--theme-line:rgba(var(--accent-rgb),.18)}
+:root[data-theme="blocks"]{--shell-radius:17px;--nav-radius:8px;--icon-radius:7px;--theme-line:rgba(79,143,255,.3)}
+:root[data-theme="relic"]{--shell-radius:18px;--nav-radius:9px;--icon-radius:5px;--theme-line:rgba(214,175,53,.34)}
+:root[data-theme="tactical"]{--shell-radius:7px;--nav-radius:4px;--icon-radius:3px;--theme-line:rgba(227,79,91,.36)}
+:root[data-theme="operation"]{--shell-radius:10px;--nav-radius:5px;--icon-radius:4px;--theme-line:rgba(220,123,45,.34)}
+.svg-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.nav-icon,.brand-signature,.theme-swatch svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.sidebar{width:218px;padding:20px 14px;border-radius:26px;background:linear-gradient(165deg,color-mix(in srgb,var(--surface-1) 96%,var(--accent) 4%),color-mix(in srgb,var(--surface-0) 96%,black));box-shadow:inset 0 1px rgba(255,255,255,.055),0 24px 70px rgba(0,0,0,.34);overflow:hidden}
+.sidebar:before{content:"";position:absolute;inset:0 0 auto;height:118px;background:radial-gradient(circle at 28% 0,rgba(var(--accent-rgb),.17),transparent 68%);border-top:1px solid rgba(255,255,255,.05);pointer-events:none}
+.brand{position:relative;z-index:1;padding:2px 5px 25px;gap:11px;border-bottom:1px solid rgba(255,255,255,.045);margin-bottom:15px}
+.brand-mark{position:relative;flex:0 0 auto;width:44px;height:44px;border-radius:14px;padding:0;border:1px solid rgba(var(--accent-rgb),.55);background:linear-gradient(145deg,rgba(var(--accent-rgb),.3),rgba(var(--accent-rgb),.07));box-shadow:inset 0 1px rgba(255,255,255,.12),0 10px 28px rgba(var(--accent-rgb),.18);color:var(--accent)}
+.brand-core{display:block;width:100%;height:100%;padding:5px}.brand-core .brand-frame{fill:rgba(var(--accent-rgb),.08);stroke:rgba(255,255,255,.2);stroke-width:1.2}.brand-core .brand-flow{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.brand-core .brand-pulse{fill:none;stroke:var(--accent-2);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.brand-core circle{fill:var(--accent-2);stroke:none}
+.brand-signature{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;padding:3px;border:1px solid rgba(var(--accent-rgb),.48);border-radius:6px;background:var(--surface-0);color:var(--accent-2);box-shadow:0 5px 14px rgba(0,0,0,.35)}
+.brand-word{min-width:0}.brand-word strong{display:flex;align-items:baseline;gap:3px;font-size:calc(13px * var(--font-scale));letter-spacing:.12em;white-space:nowrap}.brand-word strong span{color:color-mix(in srgb,var(--accent) 78%,white);font-size:.72em;letter-spacing:.08em}.brand-word small{display:block;margin-top:5px;color:#5f687b;font-size:calc(5.5px * var(--font-scale));font-weight:700;letter-spacing:.15em;white-space:nowrap}
+.sidebar nav{position:relative;z-index:1;gap:6px}.sidebar nav button{min-height:46px;padding:6px 8px;border:1px solid transparent;border-radius:var(--nav-radius);gap:9px;font-size:0;transition:background-color .16s ease,border-color .16s ease,transform .16s ease,color .16s ease,box-shadow .16s ease}.sidebar nav button:hover{transform:translateX(2px);border-color:rgba(255,255,255,.045)}.sidebar nav button.active{color:#fff;border-color:var(--theme-line);background:linear-gradient(100deg,rgba(var(--accent-rgb),.2),rgba(var(--accent-rgb),.045));box-shadow:inset 3px 0 var(--accent),0 8px 22px rgba(var(--accent-rgb),.07)}
+.nav-icon{width:34px;height:34px;flex:0 0 34px;padding:7px;border-radius:var(--icon-radius);color:#818ba0;stroke-width:1.65;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.035);transition:color .16s ease,background-color .16s ease,transform .16s ease,box-shadow .16s ease}.sidebar nav button:hover .nav-icon{color:color-mix(in srgb,var(--accent) 65%,white)}.sidebar nav button.active .nav-icon{color:#fff;background:linear-gradient(145deg,rgba(var(--accent-rgb),.42),rgba(var(--accent-rgb),.11));border-color:rgba(var(--accent-rgb),.35);box-shadow:0 5px 15px rgba(var(--accent-rgb),.18);transform:scale(1.03)}
+.sidebar nav .nav-label{display:block;color:inherit;font-size:calc(11px * var(--font-scale));font-weight:720;letter-spacing:-.01em}.sidebar-foot{position:relative;z-index:1;margin-top:auto;margin-left:2px;margin-right:2px;padding:17px 8px 4px;border-top-color:rgba(255,255,255,.055)}
+.boost-bolt{display:block;width:32px;height:32px;color:#fff;filter:drop-shadow(0 0 10px rgba(255,255,255,.48))}.boost-orb.engaged .boost-bolt{color:#d8ffed;filter:drop-shadow(0 0 11px rgba(69,240,168,.65))}
+.focus-dashboard,.panel,.appearance-studio{border-radius:var(--shell-radius)}
+
+.theme-swatch svg{position:absolute;z-index:3;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%);color:rgba(255,255,255,.9);filter:drop-shadow(0 6px 10px rgba(0,0,0,.3))}.theme-tile.blocks .theme-swatch svg{color:#14233d}.theme-tile.relic .theme-swatch svg{color:#f0ce63}.theme-tile.tactical .theme-swatch svg{color:#fff}.theme-tile.operation .theme-swatch svg{color:#f2a155}.theme-tile.contrast .theme-swatch svg{color:#ffd84d;mix-blend-mode:difference}
+
+/* Core themes keep the same product, but have distinct visual personalities. */
+:root[data-theme="nebula"] .sidebar{background:linear-gradient(165deg,rgba(24,20,47,.92),rgba(8,9,16,.94) 48%)}
+:root[data-theme="nebula"] .focus-dashboard{background:radial-gradient(circle at 13% 25%,rgba(120,87,255,.17),transparent 32%),linear-gradient(135deg,rgba(22,20,38,.82),rgba(9,10,16,.78))}
+:root[data-theme="midnight"] .sidebar{background:linear-gradient(165deg,rgba(10,29,47,.94),rgba(5,8,13,.97) 52%)}
+:root[data-theme="midnight"] .theme-pattern{opacity:.22;background:radial-gradient(circle at 68% 14%,rgba(98,207,255,.8) 0 1px,transparent 2px),radial-gradient(circle at 83% 31%,rgba(127,123,255,.58) 0 1px,transparent 2px),radial-gradient(circle at 53% 42%,rgba(255,255,255,.35) 0 1px,transparent 2px);background-size:210px 180px,270px 230px,340px 280px}
+:root[data-theme="emerald"] .sidebar{background:linear-gradient(165deg,rgba(8,37,28,.94),rgba(5,10,8,.97) 55%)}
+:root[data-theme="emerald"] .theme-pattern{opacity:.18;background:linear-gradient(118deg,transparent 0 65%,rgba(57,229,162,.08) 65.2% 65.5%,transparent 65.8%),radial-gradient(ellipse at 85% 45%,rgba(57,229,162,.13),transparent 33%)}
+
+/* Atmosphere themes alter shape language and iconography, while remaining original. */
+:root[data-theme="blocks"] .sidebar{background:linear-gradient(160deg,rgba(22,38,69,.96),rgba(9,15,29,.97));border-color:rgba(79,143,255,.2)}
+:root[data-theme="blocks"] .sidebar:after{content:"";position:absolute;width:46px;height:46px;right:-16px;top:86px;background:#ffd449;transform:rotate(30deg);opacity:.12;box-shadow:-36px 48px #4f8fff,-4px 92px #43e6a2}
+:root[data-theme="blocks"] .brand-mark{border-radius:9px;background:linear-gradient(135deg,#3675dc,#4f8fff);box-shadow:7px 7px 0 rgba(255,212,73,.14)}
+:root[data-theme="blocks"] .sidebar nav button.active{background:linear-gradient(90deg,rgba(79,143,255,.26),rgba(255,212,73,.08));box-shadow:inset 3px 0 #ffd449}
+:root[data-theme="blocks"] .focus-dashboard{background:linear-gradient(145deg,rgba(21,35,62,.9),rgba(9,15,29,.85));border-color:rgba(79,143,255,.19)}
+:root[data-theme="blocks"] .quick-metrics article{border-radius:8px;background:linear-gradient(145deg,rgba(79,143,255,.055),rgba(255,212,73,.018))}
+
+:root[data-theme="relic"] .sidebar{background:linear-gradient(170deg,rgba(12,28,62,.97),rgba(4,9,24,.98));border-color:rgba(214,175,53,.22)}
+:root[data-theme="relic"] .sidebar:after{content:"";position:absolute;left:20px;right:20px;top:111px;height:1px;background:linear-gradient(90deg,transparent,#d6af35,transparent);opacity:.42}
+:root[data-theme="relic"] .brand-mark{border-radius:9px;transform:rotate(45deg);background:linear-gradient(145deg,rgba(214,175,53,.25),rgba(28,62,130,.38))}:root[data-theme="relic"] .brand-mark .brand-core,:root[data-theme="relic"] .brand-mark .brand-signature{transform:rotate(-45deg)}
+:root[data-theme="relic"] .sidebar nav button.active{border-color:rgba(214,175,53,.28);background:linear-gradient(90deg,rgba(214,175,53,.17),rgba(40,83,172,.08));box-shadow:inset 3px 0 #d6af35}
+:root[data-theme="relic"] .focus-dashboard,:root[data-theme="relic"] .appearance-studio{border-color:rgba(214,175,53,.17);background:radial-gradient(circle at 82% 0,rgba(214,175,53,.08),transparent 30%),linear-gradient(145deg,rgba(9,21,48,.9),rgba(4,9,24,.84))}
+
+:root[data-theme="tactical"] .sidebar{background:linear-gradient(165deg,rgba(30,18,23,.97),rgba(7,8,12,.99) 55%);border-color:rgba(227,79,91,.23)}
+:root[data-theme="tactical"] .brand-mark{border-radius:3px;transform:skew(-5deg);background:linear-gradient(135deg,rgba(227,79,91,.52),rgba(70,20,28,.48))}
+:root[data-theme="tactical"] .sidebar nav button.active{clip-path:polygon(0 0,94% 0,100% 50%,94% 100%,0 100%);background:linear-gradient(100deg,rgba(227,79,91,.27),rgba(227,79,91,.035));box-shadow:inset 3px 0 #e34f5b}
+:root[data-theme="tactical"] .focus-dashboard,:root[data-theme="tactical"] .appearance-studio{background:linear-gradient(120deg,rgba(26,19,24,.92),rgba(8,9,13,.88));border-color:rgba(227,79,91,.18)}
+:root[data-theme="tactical"] .quick-metrics article,:root[data-theme="tactical"] .lag-glance-grid article{border-radius:3px}
+
+:root[data-theme="operation"] .sidebar{background:linear-gradient(165deg,rgba(31,25,19,.97),rgba(7,9,9,.99) 58%);border-color:rgba(220,123,45,.23)}
+:root[data-theme="operation"] .sidebar:after{content:"NF-01";position:absolute;right:14px;top:13px;color:rgba(220,123,45,.35);font:700 6px/1 ui-monospace,monospace;letter-spacing:.16em}
+:root[data-theme="operation"] .brand-mark{border-radius:5px;background:linear-gradient(145deg,rgba(220,123,45,.44),rgba(63,38,19,.44))}
+:root[data-theme="operation"] .sidebar nav button.active{background:linear-gradient(90deg,rgba(220,123,45,.22),transparent);box-shadow:inset 3px 0 #dc7b2d}
+:root[data-theme="operation"] .focus-dashboard,:root[data-theme="operation"] .appearance-studio{background-color:rgba(12,15,15,.88);background-image:linear-gradient(rgba(220,123,45,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(220,123,45,.04) 1px,transparent 1px);background-size:28px 28px;border-color:rgba(220,123,45,.18)}
+:root[data-theme="operation"] .eyebrow,:root[data-theme="operation"] .topbar small{font-family:ui-monospace,"Cascadia Mono",monospace}
+
+:root[data-theme="high-contrast"] .brand-mark{background:#000;border-color:#fff;box-shadow:none}:root[data-theme="high-contrast"] .brand-core .brand-flow{stroke:#fff}:root[data-theme="high-contrast"] .brand-signature{background:#000;border-color:#fff;color:#ffd84d}:root[data-theme="high-contrast"] .sidebar nav button.active .nav-icon{background:#ffd84d;color:#000;border-color:#fff;box-shadow:none}
+
+@media(max-width:1000px){.sidebar{width:66px;padding:20px 8px}.brand{padding:2px 3px 22px;justify-content:center}.brand-word{display:none}.brand-mark{width:39px;height:39px}.sidebar nav button{width:49px;justify-content:center;padding:6px}.sidebar nav .nav-label{display:none}.nav-icon{width:35px;height:35px;flex-basis:35px}.sidebar-foot{justify-content:center;padding-left:0;padding-right:0}.sidebar-foot div{display:none}}

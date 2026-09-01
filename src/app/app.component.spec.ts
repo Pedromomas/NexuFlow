@@ -55,6 +55,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.componentInstance.setTheme('relic');
     expect(document.documentElement.dataset['theme']).toBe('relic');
+    expect(fixture.componentInstance.gamesNavigationIcon).toBe('icon-relic');
+    expect(fixture.componentInstance.themeSignatureIcon).toBe('icon-relic');
     expect(JSON.parse(localStorage.getItem('nexuflow_ui_preferences_v1') || '{}').theme).toBe('relic');
     fixture.destroy();
     localStorage.clear();

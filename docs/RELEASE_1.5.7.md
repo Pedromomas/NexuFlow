@@ -5,7 +5,9 @@ Esta versão reorganiza a experiência visual sem alterar o motor de otimizaçã
 ## O que mudou
 
 - **Aparência ganhou página própria**, com abas Temas e Acessibilidade e atalho `Alt+4`.
+- **Nova identidade vetorial:** marca NexuFlow Flow, ícones modernos na navegação e raio real no botão BOOST.
 - **Oito temas originais:** Nebula, Midnight, Emerald, Alto Contraste, Blocos, Relíquia, Tático e Operação.
+- Cada atmosfera agora muda também a geometria dos painéis, o emblema da marca e o ícone de Jogos: cubos, relíquia, símbolo tático ou mira técnica, sempre com desenho próprio.
 - Os quatro temas de atmosfera são marcados como **arte original, não afiliado** e não usam personagens, logos, mapas, runas, armas, agentes ou splash arts de terceiros.
 - **Flux**, mascote abstrato original do NexuFlow, aparece discretamente no fundo e muda de atmosfera com o tema. Ele é removido automaticamente no Alto Contraste.
 - **Dashboard redesenhado:** o jogo aparece uma única vez; Nexus Score, latência, CPU/RAM e GPU recebem hierarquia clara; o botão BOOST ganhou aparência tátil sem funcionar como spinner permanente.

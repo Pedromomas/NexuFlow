@@ -23,7 +23,7 @@
 | ⚡ **PC** | Saúde de CPU, RAM, GPU, energia e sinais de stutter. |
 | 🛡 **Jogos protegidos** | Políticas fail-closed para Riot, Valve, EAC e BattlEye. |
 | 🚗 **Driver Center** | Consulta sob demanda ao Windows Update; nunca baixa ou instala drivers sozinho. |
-| 🎨 **Visual Edition** | Oito temas originais, mascote próprio, acessibilidade e Dashboard com hierarquia clara. |
+| 🎨 **Visual Edition** | Marca e ícones vetoriais, oito temas originais, mascote próprio e Dashboard com hierarquia clara. |
 | 🔎 **Transparência** | Histórico local, relatórios exportáveis e explicação clara de cada modo. |
 
 ## 🎮 Recursos principais
@@ -128,6 +128,8 @@ Thermal throttling de CPU não é inventado: sem telemetria específica do fabri
 ## Visual Edition 1.5.7
 
 Aparência agora é uma área própria da barra lateral, separada dos ajustes do sistema. Os quatro temas de atmosfera são criações originais e aparecem identificados como **“arte original, não afiliado”**. Nenhum tema usa personagem, logo, mapa ou splash art de Roblox, Riot ou Valve.
+
+A marca lateral, a navegação e o raio do BOOST foram redesenhados em SVG. Blocos, Relíquia, Tático e Operação também trocam emblema, ícone de Jogos, geometria e textura da interface — não são apenas uma mudança de cor.
 
 O Dashboard foi reorganizado para destacar Nexus Score, latência, CPU/RAM e GPU, mostrar o jogo uma única vez e diferenciar visualmente os quatro sinais de origem do lag. “Confiança sem conclusão” continua visível quando os dados não permitem afirmar uma causa.
 
