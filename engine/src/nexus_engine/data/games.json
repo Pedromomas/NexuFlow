@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "notes": "Endpoint pools are intentionally empty until verified interchangeable game-server IPs are supplied. DNS/MTU/hardware optimization works without them.",
+  "games": [
+    {
+      "id": "roblox",
+      "display_name": "Roblox",
+      "process_names": ["RobloxPlayerBeta.exe"],
+      "install_hints": ["%LOCALAPPDATA%\\Roblox\\Versions\\*\\RobloxPlayerBeta.exe"],
+      "pools": []
+    },
+    {
+      "id": "valorant",
+      "display_name": "VALORANT",
+      "process_names": ["VALORANT-Win64-Shipping.exe"],
+      "install_hints": ["C:\\Riot Games\\VALORANT\\live\\ShooterGame\\Binaries\\Win64\\VALORANT-Win64-Shipping.exe"],
+      "pools": []
+    },
+    {
+      "id": "cs2",
+      "display_name": "Counter-Strike 2",
+      "process_names": ["cs2.exe"],
+      "install_hints": ["C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64\\cs2.exe"],
+      "pools": []
+    },
+    {
+      "id": "lol",
+      "display_name": "League of Legends",
+      "process_names": ["League of Legends.exe"],
+      "install_hints": ["C:\\Riot Games\\League of Legends\\Game\\League of Legends.exe"],
+      "pools": []
+    }
+  ]
+}

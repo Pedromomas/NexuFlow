@@ -1,0 +1,23 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "engine/.venv": true,
+      "src-tauri/target": true
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder}\\engine\\.venv\\Scripts\\python.exe"
+  },
+  "extensions": {
+    "recommendations": [
+      "angular.ng-template",
+      "rust-lang.rust-analyzer",
+      "ms-python.python",
+      "tauri-apps.tauri-vscode",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}

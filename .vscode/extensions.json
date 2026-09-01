@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "angular.ng-template",
+    "rust-lang.rust-analyzer",
+    "ms-python.python",
+    "tauri-apps.tauri-vscode",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

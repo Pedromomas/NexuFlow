@@ -1,0 +1,356 @@
+<ion-app>
+<main class="shell" [class.boosted]="boosted">
+  <a class="skip-link" href="#app-content">Pular para o conteúdo</a>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="noise"></div>
+
+  <div class="hotbar glass" aria-label="Barra rápida de navegação">
+    <button type="button" (click)="scrollToTop()" aria-label="Ir para o topo" title="Topo">↑</button>
+    <button type="button" class="hotbar-aa" (click)="toggleAccessibility()" [attr.aria-expanded]="accessibilityOpen" aria-label="Abrir acessibilidade" title="Aparência e acessibilidade">Aa</button>
+    <button type="button" (click)="scrollToBottom()" aria-label="Ir para o fim" title="Fim">↓</button>
+  </div>
+
+  <section class="accessibility-popover glass" *ngIf="accessibilityOpen" aria-label="Aparência e acessibilidade">
+    <div class="accessibility-head"><div><span class="eyebrow">ACESSIBILIDADE</span><b>Interface</b></div><button type="button" class="icon-button" (click)="toggleAccessibility()" aria-label="Fechar">×</button></div>
+    <div class="mini-theme-row" role="group" aria-label="Tema">
+      <button type="button" class="theme-dot nebula" [class.active]="uiTheme === 'nebula'" (click)="setTheme('nebula')" aria-label="Tema Nebula"></button>
+      <button type="button" class="theme-dot midnight" [class.active]="uiTheme === 'midnight'" (click)="setTheme('midnight')" aria-label="Tema Midnight"></button>
+      <button type="button" class="theme-dot emerald" [class.active]="uiTheme === 'emerald'" (click)="setTheme('emerald')" aria-label="Tema Emerald"></button>
+      <button type="button" class="theme-dot contrast" [class.active]="uiTheme === 'high-contrast'" (click)="setTheme('high-contrast')" aria-label="Tema de alto contraste"></button>
+      <span>{{ themeLabel }}</span>
+    </div>
+    <div class="font-quick"><span>Texto {{ fontScale }}%</span><div><button type="button" (click)="bumpFont(-5)" aria-label="Diminuir texto">A−</button><button type="button" (click)="bumpFont(5)" aria-label="Aumentar texto">A+</button></div></div>
+    <button type="button" class="motion-toggle" [class.active]="reducedMotion" (click)="toggleReducedMotion()"><span>{{ reducedMotion ? 'Movimento reduzido' : 'Animações suaves' }}</span><i></i></button>
+  </section>
+
+  <div class="learn-overlay" *ngIf="learnMoreContent as info" (click)="closeLearnMore()">
+    <section class="learn-dialog glass" role="dialog" aria-modal="true" [attr.aria-label]="info.title" (click)="$event.stopPropagation()">
+      <div class="learn-head"><div><span class="eyebrow">SAIBA MAIS</span><h2>{{ info.title }}</h2></div><button type="button" class="icon-button" (click)="closeLearnMore()" aria-label="Fechar explicação">×</button></div>
+      <p class="learn-intro">{{ info.intro }}</p>
+      <div class="learn-columns">
+        <div><small>O QUE ELE FAZ</small><span *ngFor="let item of info.does">✓ {{ item }}</span></div>
+        <div><small>O QUE ELE NÃO FAZ</small><span *ngFor="let item of info.doesNot">— {{ item }}</span></div>
+      </div>
+      <div class="learn-glossary" *ngIf="info.glossary?.length">
+        <small>TRADUZINDO OS TERMOS</small>
+        <p *ngFor="let item of info.glossary"><b>{{ item.term }}:</b> {{ item.meaning }}</p>
+      </div>
+      <button type="button" class="ghost learn-close" (click)="closeLearnMore()">Entendi</button>
+    </section>
+  </div>
+
+  <aside class="sidebar glass">
+    <div class="brand">
+      <span class="brand-mark">N</span>
+      <div><strong>NEXU</strong><small>FLOW</small></div>
+    </div>
+
+    <nav aria-label="Navegação principal">
+      <button [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><span>◈</span> Dashboard</button>
+      <button [class.active]="tab === 'games'" (click)="setTab('games')"><span>⌁</span> Jogos</button>
+      <button [class.active]="tab === 'history'" (click)="setTab('history')"><span>◷</span> Histórico</button>
+      <button [class.active]="tab === 'settings'" (click)="setTab('settings')"><span>⚙</span> Ajustes</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <span class="status-dot" [class.on]="telemetry?.engine_online"></span>
+      <div><b>{{ boosted ? 'NexuFlow ativo' : telemetry?.engine_online ? 'Em espera' : 'Engine offline' }}</b><small>{{ telemetry?.network_status || 'Inicializando' }}</small></div>
+    </div>
+  </aside>
+
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'dashboard'">
+    <header class="topbar">
+      <div><small>CONTROLE CENTRAL</small><h1>Dashboard</h1></div>
+      <div class="live-pill" [class.offline]="telemetry && !telemetry.engine_online"><i></i> {{ telemetry?.engine_online ? 'LIVE' : 'ENGINE OFFLINE' }}</div>
+    </header>
+
+    <section class="hero glass">
+      <div class="hero-copy">
+        <span class="eyebrow">{{ boosted ? 'SISTEMA OTIMIZADO' : 'ONE-CLICK PERFORMANCE' }}</span>
+        <div class="detected-title"><img *ngIf="telemetry?.active_game" [src]="gameIcon(telemetry.active_game_id)" alt=""><h2>{{ telemetry?.active_game ? telemetry.active_game + ' detectado' : 'Destrave sua melhor conexão.' }}</h2></div>
+        <p aria-live="polite">{{ message }}</p>
+      </div>
+
+      <div class="boost-stage">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <span class="particle" *ngFor="let p of [1,2,3,4,5,6,7,8,9,10,11,12]"></span>
+        <button class="boost-button" [class.engaged]="boosted" [class.busy]="busy" (click)="toggleBoost()" [disabled]="busy || !telemetry?.engine_online">
+          <span class="rim"></span>
+          <span class="button-core">
+            <small>{{ busy ? 'PROCESSANDO' : boosted ? 'STATUS' : 'PRESSIONE PARA' }}</small>
+            <strong>{{ boosted ? 'OTIMIZADO' : 'NEXUFLOW BOOST' }}</strong>
+            <em>{{ effectiveProfileLabel }}</em>
+          </span>
+        </button>
+      </div>
+
+      <div class="hero-side">
+        <div><small>PERFIL EFETIVO</small><b>{{ effectiveProfileLabel }}</b></div>
+        <div><small>NEXUS SCORE</small><b>{{ telemetry?.nexus_score ?? 0 }} / 100</b></div>
+        <div><small>JOGO</small><b>{{ telemetry?.active_game || 'Auto-detect' }}</b></div>
+      </div>
+    </section>
+
+    <div class="safe-banner riot-safe-banner" *ngIf="riotGameActive">
+      <b>{{ effectiveProfileLabel }} — proteção automática ativa</b>
+      <span>{{ selectedBoostDescription }}</span>
+    </div>
+    <div class="safe-banner valve-safe-banner" *ngIf="valveGameActive">
+      <b>{{ effectiveProfileLabel }} — Trusted Mode preservado</b>
+      <span>{{ selectedBoostDescription }}</span>
+    </div>
+
+    <section class="boost-transparency glass" *ngIf="riotGameActive || valveGameActive">
+      <div class="boost-transparency-head"><div><span class="eyebrow">O QUE ESTE MODO FAZ</span><h3>{{ effectiveProfileLabel }}</h3></div><img [src]="gameIcon(telemetry?.active_game_id)" alt=""></div>
+      <div class="boost-transparency-grid">
+        <div><small>ATIVO E PERMITIDO</small><span *ngFor="let item of selectedAllowedFeatures">✓ {{ item }}</span></div>
+        <div><small>BLOQUEADO PELO SAFE CORE</small><span *ngFor="let item of selectedBlockedFeatures">× {{ item }}</span></div>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <article class="metric glass score">
+        <div class="metric-head"><span><i></i>NEXUS SCORE</span><strong>{{ telemetry?.nexus_score ?? 0 }}<small>/100</small></strong></div>
+        <app-sparkline [values]="networkSeries" gradientId="scoreGradient"></app-sparkline>
+        <footer><span>{{ telemetry?.quality_grade || '—' }}</span><b>{{ telemetry?.quality_window_seconds ?? 0 | number:'1.0-0' }} s janela</b></footer>
+      </article>
+      <article class="metric glass ping">
+        <div class="metric-head"><span><i></i>LATÊNCIA</span><strong>{{ telemetry?.ping_ms ?? '—' }}<small> ms</small></strong></div>
+        <app-sparkline [values]="pingSeries" gradientId="pingGradient"></app-sparkline>
+        <footer><span>Antes {{ qualityBefore?.latency_ms ?? '—' }} ms</span><b>Depois {{ qualityAfter?.latency_ms ?? telemetry?.ping_ms ?? '—' }} ms</b></footer>
+      </article>
+      <article class="metric glass network">
+        <div class="metric-head"><span><i></i>JITTER / LOSS</span><strong>{{ telemetry?.jitter_ms ?? '—' }}<small> ms</small></strong></div>
+        <div class="quality-duo"><div><small>LOSS</small><b>{{ telemetry?.packet_loss_percent ?? '—' }}%</b></div><div><small>ALVO</small><b>{{ telemetry?.quality_target || '—' }}</b></div></div>
+        <footer><span>Adaptive</span><b>{{ telemetry?.session_quality?.adaptive_events ?? 0 }} eventos</b></footer>
+      </article>
+      <article class="metric glass cpu">
+        <div class="metric-head"><span><i></i>CPU / RAM</span><strong>{{ telemetry?.cpu_percent ?? 0 | number:'1.0-0' }}<small>%</small></strong></div>
+        <app-sparkline [values]="cpuSeries" gradientId="cpuGradient"></app-sparkline>
+        <footer><span>RAM {{ telemetry?.memory_used_gb ?? 0 | number:'1.1-1' }} / {{ telemetry?.memory_total_gb ?? 0 | number:'1.0-0' }} GB</span><b>{{ telemetry?.memory_percent ?? 0 | number:'1.0-0' }}%</b></footer>
+      </article>
+      <article class="metric glass gpu">
+        <div class="metric-head"><span><i></i>GPU</span><strong>{{ telemetry?.gpu_utilization ?? 0 | number:'1.0-0' }}<small>%</small></strong></div>
+        <app-sparkline [values]="gpuSeries" gradientId="gpuGradient"></app-sparkline>
+        <footer><span>{{ telemetry?.gpu_temperature_c ?? '—' }} °C</span><b class="ellipsis">{{ telemetry?.gpu_name || 'Não detectado' }}</b></footer>
+      </article>
+      <article class="metric glass game">
+        <div class="metric-head"><span><i></i>JOGO ATIVO</span><strong class="text-value">{{ telemetry?.active_game ? 'ON' : 'AUTO' }}</strong></div>
+        <div class="game-live">
+          <span class="game-live-icon"><img [src]="gameIcon(telemetry?.active_game_id)" alt=""></span>
+          <div><b>{{ telemetry?.active_game || 'Aguardando jogo' }}</b><small>{{ telemetry?.active_game ? effectiveProfileLabel : 'Roblox • VALORANT • CS2 • LoL' }}</small></div>
+        </div>
+        <footer><span>Detecção</span><b>{{ telemetry?.active_game ? 'ativa' : 'automática' }}</b></footer>
+      </article>
+    </section>
+
+    <section class="latency-lab glass" *ngIf="telemetry?.latency_budget as budget">
+      <div class="section-title"><div><span class="eyebrow">NEXUS LATENCY LAB</span><h2>De onde pode estar vindo o lag?</h2><p class="section-subtitle">Diagnóstico por evidências — não inventa milissegundos nem culpa o servidor sem prova.</p></div><span class="confidence-chip">confiança {{ confidenceLabel(budget.verdict?.confidence) }}</span></div>
+      <div class="latency-verdict"><small>SINAL PRINCIPAL</small><b>{{ latencyAreaLabel(budget.verdict?.primary_area) }}</b><span>{{ budget.verdict?.summary }}</span></div>
+      <div class="latency-domains">
+        <div><small>CONEXÃO</small><b>{{ latencyStatusLabel(budget.domains?.['connection_or_local_network']?.status) }}</b></div>
+        <div><small>ROTA / ISP</small><b>{{ latencyStatusLabel(budget.domains?.['route_or_isp']?.status) }}</b></div>
+        <div><small>PC / DRIVER</small><b>{{ latencyStatusLabel(budget.domains?.['pc_or_driver_pressure']?.status) }}</b></div>
+        <div><small>SERVIDOR</small><b>{{ latencyStatusLabel(budget.domains?.['server_or_game_specific']?.status) }}</b></div>
+      </div>
+    </section>
+
+    <section class="comparison glass" *ngIf="boosted || qualityBefore">
+      <div class="section-title"><div><span class="eyebrow">BASELINE REAL</span><h2>Antes × depois</h2></div><span class="window-note">janela de ~20–30 s • sem FPS hooks</span></div>
+      <div class="comparison-grid">
+        <div><small>LATÊNCIA</small><b>{{ qualityBefore?.latency_ms ?? '—' }} → {{ qualityAfter?.latency_ms ?? 'medindo…' }} ms</b></div>
+        <div><small>JITTER</small><b>{{ qualityBefore?.jitter_ms ?? '—' }} → {{ qualityAfter?.jitter_ms ?? 'medindo…' }} ms</b></div>
+        <div><small>PACKET LOSS</small><b>{{ qualityBefore?.packet_loss_percent ?? '—' }} → {{ qualityAfter?.packet_loss_percent ?? 'medindo…' }}%</b></div>
+        <div><small>NEXUS SCORE</small><b>{{ qualityBefore?.nexus_score ?? '—' }} → {{ qualityAfter?.nexus_score ?? 'medindo…' }}</b></div>
+      </div>
+    </section>
+  </section>
+
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'games'">
+    <header class="topbar"><div><small>DETECÇÃO AUTOMÁTICA</small><h1>Jogos</h1></div></header>
+    <section class="panel glass">
+      <div class="section-title"><div><span class="eyebrow">ZERO-CONFIG • {{ validatedGamesCount }} JOGOS VALIDADOS</span><h2>Jogos monitorados</h2><p class="section-subtitle">Encontrados neste PC: {{ installedGamesCount }} • em execução agora: {{ runningGamesCount }}. A lista mostra compatibilidade, não uma biblioteca completa da sua conta.</p></div><button class="ghost" (click)="refreshGames()">Atualizar</button></div>
+      <div class="game-list">
+        <article class="game-row" *ngFor="let game of games" [class.muted]="!game.installed">
+          <div class="game-icon"><img [src]="gameIcon(game.id)" [alt]="'Ícone de ' + game.display_name"></div>
+          <div class="game-info"><b>{{ game.display_name }}</b><span>{{ game.running ? 'Em execução • ' + effectiveProfileLabel : game.installed ? 'Instalado • pronto para detectar' : 'Compatível • não encontrado neste PC' }}</span></div>
+          <span class="game-badge" [class.running]="game.running">{{ game.running ? 'ATIVO' : game.installed ? 'PRONTO' : 'OFF' }}</span>
+        </article>
+        <div class="empty-state" *ngIf="games.length === 0"><b>Conectando ao mecanismo de detecção…</b><span>Os quatro jogos validados aparecerão quando o aplicativo desktop estiver online.</span></div>
+      </div>
+      <div class="policy-explain">
+        <div><b>Por que só quatro?</b><span>Cada jogo só entra na lista depois de validar detecção, proteção e rollback. Não adicionamos nomes apenas para parecer que há mais suporte.</span></div>
+        <div><b>Vanguard automático</b><span>VALORANT e LoL ativam limites não invasivos por cima de Ping, PC ou Completo.</span></div>
+        <div><b>Valve automático</b><span>CS2 mantém o processo do jogo intocado e preserva o modo confiável.</span></div>
+      </div>
+    </section>
+  </section>
+
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'history'">
+    <header class="topbar"><div><small>PROVA DE RESULTADO</small><h1>Histórico de Sessões</h1></div><button class="ghost" (click)="refreshHistory()">Atualizar</button></header>
+    <section class="panel glass">
+      <div class="empty-state" *ngIf="history.length === 0"><b>Nenhuma sessão finalizada ainda.</b><span>Depois de BOOST → STOP, o antes/depois aparece aqui.</span></div>
+      <div class="history-list" *ngIf="history.length > 0">
+        <article class="history-row" *ngFor="let record of history">
+          <div class="history-main"><b>{{ record.game?.display_name || 'Jogo' }}</b><span>{{ (record.started_at || 0) * 1000 | date:'dd/MM HH:mm' }} • {{ record.effective_profile }}</span></div>
+          <div><small>PING</small><b>{{ record.quality_before?.latency_ms ?? '—' }} → {{ record.quality_after?.latency_ms ?? '—' }} ms</b></div>
+          <div><small>JITTER</small><b>{{ record.quality_before?.jitter_ms ?? '—' }} → {{ record.quality_after?.jitter_ms ?? '—' }} ms</b></div>
+          <div><small>LOSS</small><b>{{ record.quality_before?.packet_loss_percent ?? '—' }} → {{ record.quality_after?.packet_loss_percent ?? '—' }}%</b></div>
+          <div><small>SCORE</small><b>{{ record.quality_before?.nexus_score ?? '—' }} → {{ record.quality_after?.nexus_score ?? '—' }}</b></div>
+        </article>
+      </div>
+    </section>
+  </section>
+
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'settings'">
+    <header class="topbar"><div><small>POLÍTICA DE OTIMIZAÇÃO</small><h1>Ajustes do Sistema</h1></div></header>
+    <section class="panel glass settings-panel">
+      <div class="section-title"><div><span class="eyebrow">QUATRO ESCOLHAS SIMPLES</span><h2>O que você quer melhorar?</h2><p class="section-subtitle">Você escolhe o objetivo. Vanguard, Valve, EAC ou BattlEye entram automaticamente como proteção — não são modos extras para escolher.</p></div></div>
+      <div class="profile-grid">
+        <article class="profile-card" [class.selected]="profile === 'ping'">
+          <button type="button" class="profile-choice" (click)="setProfile('ping')"><span>🌐 CONEXÃO</span><h3>Ping</h3><p>Mede a estabilidade da internet e aplica apenas ajustes de rede permitidos.</p></button>
+          <button type="button" class="learn-link" (click)="openLearnMore('ping')">Saiba mais <b>→</b></button>
+        </article>
+        <article class="profile-card" [class.selected]="profile === 'pc'">
+          <button type="button" class="profile-choice" (click)="setProfile('pc')"><span>⚡ DESEMPENHO</span><h3>PC</h3><p>Prepara o Windows para jogar usando ajustes temporários e reversíveis.</p></button>
+          <button type="button" class="learn-link" (click)="openLearnMore('pc')">Saiba mais <b>→</b></button>
+        </article>
+        <article class="profile-card recommended" [class.selected]="profile === 'complete'">
+          <button type="button" class="profile-choice" (click)="setProfile('complete')"><span>★ RECOMENDADO</span><h3>Completo</h3><p>Combina os recursos seguros de conexão e PC e respeita automaticamente o anticheat.</p></button>
+          <button type="button" class="learn-link" (click)="openLearnMore('complete')">Saiba mais <b>→</b></button>
+        </article>
+        <article class="profile-card riot" [class.selected]="profile === 'hardcore_safe'">
+          <button type="button" class="profile-choice" (click)="setProfile('hardcore_safe')"><span>🛡 SOMENTE ANÁLISE</span><h3>Hardcore Safe</h3><p>Mostra o estado da conexão e do PC sem alterar nenhuma configuração.</p></button>
+          <button type="button" class="learn-link" (click)="openLearnMore('hardcore_safe')">Saiba mais <b>→</b></button>
+        </article>
+      </div>
+
+      <div class="security-ux-card">
+        <div><span class="eyebrow">TRANSPARENCY CENTER</span><h3>{{ effectiveProfileLabel }}</h3><p>{{ selectedBoostDescription }}</p></div>
+        <button class="ghost" type="button" (click)="exportSessionReport()">Exportar relatório da sessão</button>
+      </div>
+
+      <div class="appearance-card">
+        <div class="section-title"><div><span class="eyebrow">VISUAL & ACESSIBILIDADE</span><h2>Seu NexuFlow, do seu jeito</h2></div><button class="ghost" type="button" (click)="resetUiPreferences()">Restaurar padrão</button></div>
+        <div class="appearance-grid">
+          <div class="theme-picker">
+            <small>TEMA</small>
+            <div class="theme-options" role="group" aria-label="Escolha de tema">
+              <button type="button" class="theme-option nebula" [class.selected]="uiTheme === 'nebula'" (click)="setTheme('nebula')"><i></i><span>Nebula</span></button>
+              <button type="button" class="theme-option midnight" [class.selected]="uiTheme === 'midnight'" (click)="setTheme('midnight')"><i></i><span>Midnight</span></button>
+              <button type="button" class="theme-option emerald" [class.selected]="uiTheme === 'emerald'" (click)="setTheme('emerald')"><i></i><span>Emerald</span></button>
+              <button type="button" class="theme-option contrast" [class.selected]="uiTheme === 'high-contrast'" (click)="setTheme('high-contrast')"><i></i><span>Alto contraste</span></button>
+            </div>
+          </div>
+          <div class="access-setting">
+            <div><small>TAMANHO DO TEXTO</small><b>{{ fontScale }}%</b></div>
+            <input type="range" min="90" max="125" step="5" [ngModel]="fontScale" (ngModelChange)="setFontScale($event)" aria-label="Tamanho do texto">
+            <div class="font-actions"><button type="button" (click)="bumpFont(-5)">A−</button><button type="button" (click)="bumpFont(5)">A+</button></div>
+          </div>
+          <button type="button" class="access-setting motion-card" [class.enabled]="reducedMotion" (click)="toggleReducedMotion()">
+            <div><small>MOVIMENTO</small><b>{{ reducedMotion ? 'Reduzido' : 'Suave' }}</b></div>
+            <span>{{ reducedMotion ? 'Transições essenciais apenas.' : 'Animações leves por GPU, sem efeitos pesados.' }}</span><i></i>
+          </button>
+        </div>
+        <div class="shortcut-note"><b>Atalhos:</b> Alt+1 Dashboard · Alt+2 Jogos · Alt+3 Histórico · Alt+4 Ajustes · Esc fecha o painel rápido.</div>
+      </div>
+
+      <div class="security-ux-card">
+        <div><span class="eyebrow">DESKTOP CLEAN MODE</span><h3>Sem janela CMD no aplicativo instalado</h3><p>O sidecar empacotado usa IPC por arquivo e build windowless. Ao desligar uma otimização ativa, o próprio helper elevado faz o rollback sem pedir uma segunda confirmação do Windows.</p></div>
+        <div class="security-pill"><b>Uma autorização ao abrir</b><span>A 1.5.5 pede a permissão do Windows uma vez por execução. Ativar e desativar não deve repetir a janela enquanto o NexuFlow estiver aberto.</span><button type="button" class="learn-link" (click)="openLearnMore('uac')">Entenda o “Sim ou Não” <b>→</b></button></div>
+      </div>
+
+      <div class="driver-center health-card">
+        <div class="section-title">
+          <div><span class="eyebrow">DRIVER EDITION • WINDOWS UPDATE</span><h2>Central de drivers</h2><p class="section-subtitle">Procura atualizações oferecidas pela Microsoft. O NexuFlow não baixa pacote de site desconhecido e não instala nada sozinho.</p></div>
+          <span class="confidence-chip">1.5.5</span>
+        </div>
+        <div class="driver-summary" [class.has-updates]="(driverReport?.updates_offered || 0) > 0">
+          <div><small>STATUS</small><b>{{ driverStatusLabel }}</b><span>{{ driverMessage }}</span></div>
+          <div class="driver-actions">
+            <button type="button" class="ghost" (click)="scanDrivers()" [disabled]="driverBusy">{{ driverBusy ? 'Verificando…' : 'Verificar drivers' }}</button>
+            <button type="button" class="ghost driver-open" (click)="openDriverUpdates()" [disabled]="driverBusy">Abrir atualizações oficiais</button>
+          </div>
+        </div>
+        <div class="driver-list" *ngIf="driverReport?.updates?.length">
+          <article *ngFor="let update of driverReport.updates">
+            <div class="driver-icon">D</div>
+            <div><b>{{ update.model || update.title }}</b><span>{{ update.manufacturer || update.provider || 'Fornecedor informado pelo Windows Update' }}</span><small>{{ update.driver_class || 'Driver' }}<ng-container *ngIf="update.driver_date"> • {{ update.driver_date | date:'dd/MM/yyyy' }}</ng-container></small></div>
+            <span class="driver-badge">REVISAR</span>
+          </article>
+        </div>
+        <div class="driver-safety">
+          <span>✓ Scan local e sob demanda</span><span>✓ Sem hardware ID ou caminho pessoal no relatório</span><span>✓ Instalação confirmada no Windows</span><span>× Sem “driver updater” de terceiros</span>
+        </div>
+      </div>
+
+      <div class="health-card">
+        <div class="section-title"><div><span class="eyebrow">WINDOWS GAMING HEALTH</span><h2>Saúde do sistema</h2></div><button class="ghost" (click)="refreshHealth()">Atualizar</button></div>
+        <div class="health-grid">
+          <div><small>REDE</small><b>{{ gamingHealth.network?.['connection_type'] || '—' }}</b><span>{{ gamingHealth.network?.['link_speed'] || '—' }}</span></div>
+          <div><small>GPU</small><b>{{ gamingHealth.gpu?.['name'] || '—' }}</b><span>Driver {{ gamingHealth.gpu?.['driver_version'] || '—' }}</span></div>
+          <div><small>ENERGIA</small><b>{{ gamingHealth.power?.['name'] || '—' }}</b><span>{{ gamingHealth.power?.['on_ac_power'] ? 'AC conectado' : 'Verificar alimentação' }}</span></div>
+          <div><small>RAM LIVRE</small><b>{{ gamingHealth.memory?.['available_gb'] || '—' }} GB</b><span>{{ gamingHealth.memory?.['percent'] || '—' }}% em uso</span></div>
+        </div>
+        <div class="health-warning" *ngFor="let warning of healthWarnings">{{ warning.message }}</div>
+      </div>
+
+      <div class="latency-lab health-card">
+        <div class="section-title"><div><span class="eyebrow">SAFE PERFORMANCE LAB</span><h2>Rede, Windows e microtravadas</h2><p class="section-subtitle">Leitura oficial do Windows, sem driver próprio e sem tocar no processo do jogo.</p></div><span class="confidence-chip">1.5.5</span></div>
+        <div class="lab-grid">
+          <article>
+            <small>PLACA DE REDE</small><b>{{ gamingHealth.nic_health?.['deferred'] ? 'Adiado pelo anticheat' : gamingHealth.nic_health?.['available'] ? 'Diagnóstico pronto' : 'Indisponível' }}</b>
+            <span>EEE: {{ latencyStatusLabel(gamingHealth.nic_health?.['features']?.['energy_efficient_ethernet']?.['status']) }}</span>
+            <span>RSS: {{ latencyStatusLabel(gamingHealth.nic_health?.['features']?.['receive_side_scaling']?.['status']) }}</span>
+            <span>Interrupt Moderation: {{ latencyStatusLabel(gamingHealth.nic_health?.['features']?.['interrupt_moderation']?.['status']) }}</span>
+          </article>
+          <article>
+            <small>WINDOWS GAMING</small><b>Game Mode: {{ gamingHealth.windows_gaming?.['game_mode']?.['status'] || 'unknown' }}</b>
+            <span>{{ gamingHealth.windows_gaming?.['graphics_preferences']?.['stored_entries'] || 0 }} preferências gráficas locais encontradas.</span>
+            <span>Nenhum caminho de aplicativo é exportado.</span>
+          </article>
+          <article>
+            <small>STUTTER HEALTH</small><b>{{ gamingHealth.stutter_health?.['classification']?.['classification'] || 'coletando' }}</b>
+            <span>CPU, memória, disco e interrupções agregadas.</span>
+            <span>ETW profundo não é iniciado nesta versão estável.</span>
+          </article>
+          <article>
+            <small>SESSION GUARD ADVISOR</small><b>{{ gamingHealth.session_guard?.['deferred'] ? 'Adiado pelo anticheat' : (gamingHealth.session_guard?.['candidate_count'] || 0) + ' possível(is) carga(s)' }}</b>
+            <span>Mostra programas de fundo conhecidos sem fechá-los.</span>
+            <span>Prioridade automática fica desligada nesta versão estável.</span>
+          </article>
+          <article>
+            <small>POLÍTICA ASSINADA</small><b>{{ gamingHealth.policy?.['verified'] ? 'Ed25519 verificado' : 'Política local conservadora' }}</b>
+            <span>O feed remoto só pode desativar recursos.</span>
+            <span>Nunca recebe comandos ou habilita funções.</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="route-card">
+        <div class="section-title"><div><span class="eyebrow">WINMTR-LIKE • READ ONLY</span><h2>Diagnóstico da rota</h2></div><button class="ghost" (click)="runRouteDiagnostics()" [disabled]="routeBusy">{{ routeBusy ? 'Analisando…' : 'Analisar rota' }}</button></div>
+        <p>Nunca muda a rota baseado no traceroute. Hops intermediários podem limitar ICMP, então o NexuFlow procura degradação que persiste até o destino.</p>
+        <div class="route-observation" *ngFor="let observation of routeReport?.analysis?.observations">{{ observation }}</div>
+        <div class="route-table" *ngIf="routeReport?.hops?.length">
+          <div class="route-hop" *ngFor="let hop of routeReport.hops"><b>#{{ hop.hop }}</b><span>{{ hop.address || '*' }}</span><span>{{ hop.median_ms ?? '—' }} ms</span><span>{{ hop.loss_percent ?? '—' }}% loss</span></div>
+        </div>
+        <small class="route-caution" *ngIf="routeReport?.analysis?.caution">{{ routeReport.analysis.caution }}</small>
+      </div>
+
+      <div class="api-card" *ngIf="!desktopMode">
+        <div>
+          <span class="eyebrow">CONTROLE LOCAL DE DESENVOLVIMENTO</span>
+          <h3>{{ transport }}</h3>
+          <p>No aplicativo Tauri instalado este token não aparece. Ele existe somente para proteger as mutações da FastAPI durante <code>ionic serve</code>.</p>
+        </div>
+        <div class="api-token-row">
+          <input [(ngModel)]="apiTokenDraft" type="password" autocomplete="off" placeholder="X-NexuFlow-Token">
+          <button class="ghost" (click)="saveApiToken()">Salvar token</button>
+        </div>
+      </div>
+      <div class="restore-row"><div><b>Rollback de emergência</b><span>Restaura DNS, MTU, processo, power plan, serviços e snapshots pendentes.</span></div><button class="ghost warning" (click)="restoreAll()" [disabled]="busy">Restaurar tudo</button></div>
+    </section>
+  </section>
+</main>
+</ion-app>

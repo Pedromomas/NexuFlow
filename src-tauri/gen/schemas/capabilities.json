@@ -1,0 +1,1 @@
+{"main-capability":{"identifier":"main-capability","description":"Minimal permissions for the NexuFlow UI. The webview cannot execute arbitrary shell commands.","local":true,"windows":["main"],"permissions":["core:default"]}}

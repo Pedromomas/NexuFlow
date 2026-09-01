@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Nexus: Doctor",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\doctor.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Nexus: Dev",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\dev.ps1"],
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Nexus: Build Installer",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\build.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Nexus: Emergency Restore",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\emergency-restore.ps1"],
+      "problemMatcher": []
+    }
+  ]
+}

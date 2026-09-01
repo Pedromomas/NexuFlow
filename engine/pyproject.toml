@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexuflow-engine"
+version = "1.5.5"
+description = "Privileged Windows network and game optimization engine for NexuFlow"
+requires-python = ">=3.12"
+dependencies = [
+    "psutil>=7.2.2,<8",
+    "fastapi>=0.141.1,<0.142",
+    "uvicorn>=0.52.4,<0.53",
+    "cryptography>=50.0.1,<51",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "httpx>=0.28,<1",
+    "pyinstaller>=6,<7",
+]
+
+[project.scripts]
+nexuflow-engine = "nexus_engine.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nexus_engine = ["data/*.json"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", ".."]
+testpaths = ["tests", "../app/tests"]
