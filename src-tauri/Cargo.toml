@@ -1,6 +1,6 @@
 [package]
 name = "nexuflow"
-version = "1.5.7"
+version = "1.5.8"
 description = "NexuFlow desktop host"
 authors = ["NexuFlow contributors"]
 edition = "2021"

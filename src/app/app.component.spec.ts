@@ -62,6 +62,28 @@ describe('AppComponent', () => {
     localStorage.clear();
   });
 
+  it('unlocks the secret art locally and reveals its theme only after redemption', async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.componentInstance.tab = 'appearance';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.theme-tile').length).toBe(8);
+
+    fixture.componentInstance.secretCodeDraft = 'nexu-secreto-157';
+    await fixture.componentInstance.redeemSecretCode();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.secretUnlocked).toBe(true);
+    expect(fixture.componentInstance.uiTheme).toBe('secret');
+    expect(document.documentElement.dataset['theme']).toBe('secret');
+    expect(fixture.nativeElement.querySelectorAll('.theme-tile').length).toBe(9);
+    expect(localStorage.getItem('nexuflow_secret_art_unlocked_v1')).toBe('1');
+    fixture.componentInstance.setTheme('nebula');
+    fixture.destroy();
+    localStorage.clear();
+  });
+
   it('maps latency evidence to distinct visual status tones', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);

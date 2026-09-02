@@ -1,5 +1,6 @@
 # Histórico de versões
 
+- [`v1.5.8 — Secret Art Edition`](v1.5.8-SecretArtEdition/README.md) — código cosmético local e tema secreto com arte original enviada pelo criador.
 - [`v1.5.7 — Visual Edition`](v1.5.7-VisualEdition/README.md) — oito temas originais, Flux, Aparência separada, acessibilidade e Dashboard redesenhado.
 
 Este diretório preserva a história pública do NexuFlow sem duplicar instaladores e dependências no repositório.
@@ -16,3 +17,5 @@ Cada pasta explica o marco daquela versão. Os arquivos de instalação, SBOMs e
 | 1.4.2 | Clear Boost |
 | 1.5.0 | Latency Lab |
 | 1.5.5 | Driver Edition |
+| 1.5.7 | Visual Edition |
+| 1.5.8 | Secret Art Edition |

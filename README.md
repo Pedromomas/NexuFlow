@@ -9,7 +9,7 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão atual: 1.5.7 — Visual Edition**
+**Versão atual: 1.5.8 — Secret Art Edition**
 
 </div>
 
@@ -23,7 +23,7 @@
 | ⚡ **PC** | Saúde de CPU, RAM, GPU, energia e sinais de stutter. |
 | 🛡 **Jogos protegidos** | Políticas fail-closed para Riot, Valve, EAC e BattlEye. |
 | 🚗 **Driver Center** | Consulta sob demanda ao Windows Update; nunca baixa ou instala drivers sozinho. |
-| 🎨 **Visual Edition** | Marca e ícones vetoriais, oito temas originais, mascote próprio e Dashboard com hierarquia clara. |
+| 🎨 **Visual Edition** | Marca e ícones vetoriais, oito temas públicos, uma arte secreta local e Dashboard com hierarquia clara. |
 | 🔎 **Transparência** | Histórico local, relatórios exportáveis e explicação clara de cada modo. |
 
 ## 🎮 Recursos principais
@@ -33,6 +33,7 @@
 - **Protected Session Shield:** sessão protegida limita o NexuFlow a ações compatíveis e bloqueia superfícies arriscadas.
 - **Central de Drivers 1.5.5:** mostra atualizações que o próprio Windows oferece e encaminha para a tela oficial de atualizações opcionais.
 - **Aparência 1.5.7:** galeria independente com Nebula, Midnight, Emerald, Alto Contraste, Blocos, Relíquia, Tático e Operação.
+- **Arte Secreta 1.5.8:** código cosmético validado localmente libera ícone, mascote e capa exclusivos na galeria.
 - **Flux:** mascote original do NexuFlow, sem personagens, logos ou arte de terceiros.
 - **Privacy by default:** dados ficam locais; não há telemetria externa obrigatória.
 
@@ -134,6 +135,12 @@ A marca lateral, a navegação e o raio do BOOST foram redesenhados em SVG. Bloc
 O Dashboard foi reorganizado para destacar Nexus Score, latência, CPU/RAM e GPU, mostrar o jogo uma única vez e diferenciar visualmente os quatro sinais de origem do lag. “Confiança sem conclusão” continua visível quando os dados não permitem afirmar uma causa.
 
 Animações usam somente opacidade e transformação curta, respeitam a opção Movimento reduzido e não adicionam polling, acesso a processo, rede ou anticheat.
+
+## Secret Art Edition 1.5.8
+
+Uma nova aba **Código secreto** fica abaixo de Ajustes. A chave é transformada e comparada localmente; o texto digitado não é salvo nem enviado. Quando aceita, a preferência de desbloqueio fica somente neste computador e revela uma nona aparência original com ícone, mascote e capa próprios.
+
+O desbloqueio é uma surpresa cosmética entre amigos, não um sistema de autenticação ou licença. Ele não concede recursos de engine, não altera o BOOST e não expande a allow-list do Tauri.
 
 ## Driver Center 1.5.5
 

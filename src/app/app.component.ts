@@ -14,8 +14,8 @@ import {
 } from './core/models';
 import { NexusService } from './core/nexus.service';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'appearance' | 'settings';
-type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation';
+type Tab = 'dashboard' | 'games' | 'history' | 'appearance' | 'settings' | 'redeem';
+type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret';
 type AppearanceSection = 'themes' | 'accessibility';
 type LearnTopic = 'ping' | 'pc' | 'complete' | 'hardcore_safe' | 'uac';
 
@@ -61,10 +61,15 @@ export class AppComponent implements OnInit, OnDestroy {
   reducedMotion = false;
   accessibilityOpen = false;
   appearanceSection: AppearanceSection = 'themes';
+  secretUnlocked = false;
+  secretCodeDraft = '';
+  secretCodeMessage = 'Digite um código para revelar conteúdos cosméticos guardados neste computador.';
   learnTopic: LearnTopic | null = null;
   private timer?: ReturnType<typeof setInterval>;
   private tick = 0;
   private readonly uiPrefsKey = 'nexuflow_ui_preferences_v1';
+  private readonly secretUnlockKey = 'nexuflow_secret_art_unlocked_v1';
+  private readonly secretCodeDigest = 'cc4a2c7e4588853f351cdb6b3fb919a7118280aa2d76aa4921b84fa7acfeb529';
   private readonly boostModeKey = 'nexuflow_boost_mode_v155';
   private readonly legacyBoostModeKey = 'nexuflow_boost_mode_v150';
   private readonly olderBoostModeKey = 'nexuflow_boost_mode_v142';
@@ -73,6 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.apiTokenDraft = this.nexus.getStoredApiToken();
     this.transport = this.nexus.transportLabel();
     this.desktopMode = this.nexus.isDesktop();
+    this.loadSecretUnlock();
     this.loadUiPreferences();
     this.loadBoostMode();
   }
@@ -122,6 +128,57 @@ export class AppComponent implements OnInit, OnDestroy {
   setAppearanceSection(section: AppearanceSection): void {
     this.appearanceSection = section;
     this.cdr.markForCheck();
+  }
+
+  async redeemSecretCode(): Promise<void> {
+    if (this.secretUnlocked) {
+      this.secretCodeMessage = 'A Arte Secreta já está desbloqueada neste computador.';
+      this.tab = 'appearance';
+      this.appearanceSection = 'themes';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const normalized = this.secretCodeDraft.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!normalized) {
+      this.secretCodeMessage = 'Digite o código antes de confirmar.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    try {
+      const bytes = new TextEncoder().encode(normalized);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      const hex = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+      if (hex !== this.secretCodeDigest) {
+        this.secretCodeMessage = 'Código não reconhecido. Confira os caracteres e tente novamente.';
+        this.secretCodeDraft = '';
+        this.cdr.markForCheck();
+        return;
+      }
+
+      this.secretUnlocked = true;
+      localStorage.setItem(this.secretUnlockKey, '1');
+      this.secretCodeDraft = '';
+      this.secretCodeMessage = 'Arte Secreta desbloqueada! Ela já está ativa e disponível em Aparência.';
+      this.uiTheme = 'secret';
+      this.appearanceSection = 'themes';
+      this.tab = 'appearance';
+      this.applyUiPreferences();
+      this.persistUiPreferences();
+    } catch {
+      this.secretCodeMessage = 'Não foi possível validar o código neste ambiente.';
+    }
+    this.cdr.markForCheck();
+  }
+
+  private loadSecretUnlock(): void {
+    try {
+      this.secretUnlocked = localStorage.getItem(this.secretUnlockKey) === '1';
+      if (this.secretUnlocked) this.secretCodeMessage = 'Arte Secreta já desbloqueada neste computador.';
+    } catch {
+      this.secretUnlocked = false;
+    }
   }
 
   setProfile(profile: BoostProfile): void {
@@ -394,7 +451,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   exportSessionReport(): void {
     const safe = {
-      schema: 3, product: 'NexuFlow 1.5.7 Visual Edition', exported_at: new Date().toISOString(),
+      schema: 3, product: 'NexuFlow 1.5.8 Secret Art Edition', exported_at: new Date().toISOString(),
       requested_profile: this.profile, effective_profile: this.telemetry?.effective_profile ?? null,
       objective_mode: this.telemetry?.objective_mode ?? this.boostObjective(),
       game_id: this.telemetry?.active_game_id ?? null, quality: this.telemetry?.session_quality ?? null,
@@ -424,7 +481,8 @@ export class AppComponent implements OnInit, OnDestroy {
       blocks: 'Blocos',
       relic: 'Relíquia',
       tactical: 'Tático',
-      operation: 'Operação'
+      operation: 'Operação',
+      secret: 'Arte Secreta'
     };
     return labels[this.uiTheme];
   }
@@ -434,7 +492,8 @@ export class AppComponent implements OnInit, OnDestroy {
       blocks: 'icon-cubes',
       relic: 'icon-relic',
       tactical: 'icon-tactical',
-      operation: 'icon-operation'
+      operation: 'icon-operation',
+      secret: 'icon-secret'
     };
     return themedIcons[this.uiTheme] ?? 'icon-gamepad';
   }
@@ -448,12 +507,19 @@ export class AppComponent implements OnInit, OnDestroy {
       blocks: 'icon-cubes',
       relic: 'icon-relic',
       tactical: 'icon-tactical',
-      operation: 'icon-operation'
+      operation: 'icon-operation',
+      secret: 'icon-secret'
     };
     return icons[this.uiTheme];
   }
 
   setTheme(theme: UiTheme): void {
+    if (theme === 'secret' && !this.secretUnlocked) {
+      this.message = 'A Arte Secreta precisa ser desbloqueada com um código.';
+      this.tab = 'redeem';
+      this.cdr.markForCheck();
+      return;
+    }
     this.uiTheme = theme;
     this.applyUiPreferences();
     this.persistUiPreferences();
@@ -529,7 +595,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     if (!event.altKey) return;
-    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'appearance', '5': 'settings' };
+    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'appearance', '5': 'settings', '6': 'redeem' };
     const tab = tabs[event.key];
     if (tab) {
       event.preventDefault();
@@ -544,7 +610,7 @@ export class AppComponent implements OnInit, OnDestroy {
       const raw = localStorage.getItem(this.uiPrefsKey);
       if (raw) {
         const prefs = JSON.parse(raw) as { theme?: UiTheme; fontScale?: number; reducedMotion?: boolean };
-        if (['nebula', 'midnight', 'emerald', 'high-contrast', 'blocks', 'relic', 'tactical', 'operation'].includes(String(prefs.theme))) {
+        if (['nebula', 'midnight', 'emerald', 'high-contrast', 'blocks', 'relic', 'tactical', 'operation'].includes(String(prefs.theme)) || (prefs.theme === 'secret' && this.secretUnlocked)) {
           this.uiTheme = prefs.theme as UiTheme;
         }
         this.fontScale = Math.min(125, Math.max(90, Number(prefs.fontScale) || 100));

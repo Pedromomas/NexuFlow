@@ -1,9 +1,9 @@
-# Validação — NexuFlow 1.5.7
+# Validação — NexuFlow 1.5.8
 
 ## Portões automatizados
 
 - **112 testes Python aprovados** para engine, API e limites do desktop antes do build final.
-- **8 testes Angular aprovados** antes do build final, incluindo escala de texto, oito temas originais, status visuais do diagnóstico e presença da Central de drivers.
+- Testes Angular aprovados antes do build final, incluindo escala de texto, temas públicos, bloqueio local da Arte Secreta, status visuais do diagnóstico e presença da Central de drivers.
 - Inspeção visual local do Dashboard, galeria de temas, troca de tema, alto contraste, escala de texto em 125% e janela compacta sem rolagem horizontal.
 - Compilação do host Rust/Tauri e geração do instalador NSIS.
 - Auditoria estática anti-cheat para bloquear APIs de leitura/escrita de memória remota, injeção, hooks, automação de input, packet drivers e a opção que reduz o Trusted Mode do CS2.
