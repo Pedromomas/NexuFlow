@@ -7,10 +7,12 @@ import {
   EngineResponse,
   GameInfo,
   GamingHealth,
+  InvestigatorSnapshot,
   RecoveryStatus,
   RouteDiagnostics,
   SessionRecord,
-  Telemetry
+  Telemetry,
+  SignedReportEnvelope
 } from './models';
 
 type JsonObject = Record<string, unknown>;
@@ -18,6 +20,7 @@ type JsonObject = Record<string, unknown>;
 @Injectable({ providedIn: 'root' })
 export class NexusService {
   private readonly apiBase = 'http://127.0.0.1:8000/api/v1';
+  private readonly allowedApiOrigin = 'http://127.0.0.1:8000';
   private readonly tokenKey = 'nexuflow_api_token';
 
   isDesktop(): boolean {
@@ -53,7 +56,11 @@ export class NexusService {
       headers.set('X-NexuFlow-Token', token);
     }
 
-    const response = await fetch(`${this.apiBase}${path}`, { ...init, headers });
+    const url = new URL(`${this.apiBase}${path}`);
+    if (url.origin !== this.allowedApiOrigin || !url.pathname.startsWith('/api/v1/')) {
+      throw new Error('A allowlist de rede bloqueou um destino não local.');
+    }
+    const response = await fetch(url.toString(), { ...init, headers });
     if (!response.ok) {
       let detail = `${response.status} ${response.statusText}`;
       try {
@@ -168,6 +175,19 @@ export class NexusService {
     } catch {
       return [];
     }
+  }
+
+  async investigator(): Promise<InvestigatorSnapshot> {
+    if (this.isDesktop()) return await invoke<InvestigatorSnapshot>('get_investigator');
+    return await this.api<InvestigatorSnapshot>('/investigator?limit=100');
+  }
+
+  async signSessionReport(report: Record<string, unknown>): Promise<SignedReportEnvelope> {
+    if (this.isDesktop()) return await invoke<SignedReportEnvelope>('sign_session_report', { report });
+    return await this.api<SignedReportEnvelope>('/reports/sign', {
+      method: 'POST',
+      body: JSON.stringify(report)
+    }, true);
   }
 
   async recoveryStatus(): Promise<RecoveryStatus> {

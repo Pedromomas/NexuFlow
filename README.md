@@ -9,7 +9,7 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão atual: 1.5.8 — Secret Art Edition**
+**Versão atual: 1.6.0 — Trust Edition**
 
 </div>
 
@@ -34,6 +34,8 @@
 - **Central de Drivers 1.5.5:** mostra atualizações que o próprio Windows oferece e encaminha para a tela oficial de atualizações opcionais.
 - **Aparência 1.5.7:** galeria independente com Nebula, Midnight, Emerald, Alto Contraste, Blocos, Relíquia, Tático e Operação.
 - **Arte Secreta 1.5.8:** código cosmético validado localmente libera ícone, mascote e capa exclusivos na galeria.
+- **Refino 1.5.9:** mistério total antes do resgate, mascote PNG transparente, ícone recortado e paleta azul, vermelha e branca.
+- **Trust Edition 1.6:** Modo Investigador, allowlist estrutural, relatório Ed25519 local, manifesto de confiança e pacote-fonte determinístico.
 - **Flux:** mascote original do NexuFlow, sem personagens, logos ou arte de terceiros.
 - **Privacy by default:** dados ficam locais; não há telemetria externa obrigatória.
 
@@ -41,7 +43,7 @@
 
 ## 🧭 Navegação
 
-[Instalação](docs/INSTALL.md) · [Segurança](docs/SAFETY.md) · [Compatibilidade anti-cheat](docs/ANTI_CHEAT.md) · [Validação](docs/VALIDATION.md) · [Histórico de versões](releases/README.md)
+[Instalação](docs/INSTALL.md) · [Manifesto de confiança](TRUST_MANIFEST.md) · [Segurança](SECURITY.md) · [Allowlist de rede](docs/NETWORK_ALLOWLIST.md) · [Build verificável](docs/BUILD_REPRODUCIBILITY.md) · [Compatibilidade anti-cheat](docs/ANTI_CHEAT.md) · [Validação](docs/VALIDATION.md) · [Histórico de versões](releases/README.md)
 
 ## Stack
 
@@ -141,6 +143,10 @@ Animações usam somente opacidade e transformação curta, respeitam a opção 
 Uma nova aba **Código secreto** fica abaixo de Ajustes. A chave é transformada e comparada localmente; o texto digitado não é salvo nem enviado. Quando aceita, a preferência de desbloqueio fica somente neste computador e revela uma nona aparência original com ícone, mascote e capa próprios.
 
 O desbloqueio é uma surpresa cosmética entre amigos, não um sistema de autenticação ou licença. Ele não concede recursos de engine, não altera o BOOST e não expande a allow-list do Tauri.
+
+### Refino 1.5.9
+
+A tela bloqueada não carrega nem mostra nenhuma arte secreta. Depois do código correto, a capa é revelada, o mascote passa a usar o PNG transparente fornecido pelo criador e o tema ganha identidade azul, vermelha e branca. O emblema lateral também recebeu recorte próprio para esconder o fundo do JPG original.
 
 ## Driver Center 1.5.5
 

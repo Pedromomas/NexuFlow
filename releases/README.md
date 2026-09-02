@@ -1,5 +1,8 @@
 # Histórico de versões
 
+- [`v1.6.0 — Trust Edition`](v1.6.0-TrustEdition/README.md) — transparência ao vivo, allowlist, relatórios verificáveis e build auditável.
+
+- [`v1.5.9 — Secret Art Bahia Edition`](v1.5.9-SecretArtBahiaEdition/README.md) — mistério antes do resgate, mascote transparente e identidade azul, vermelha e branca.
 - [`v1.5.8 — Secret Art Edition`](v1.5.8-SecretArtEdition/README.md) — código cosmético local e tema secreto com arte original enviada pelo criador.
 - [`v1.5.7 — Visual Edition`](v1.5.7-VisualEdition/README.md) — oito temas originais, Flux, Aparência separada, acessibilidade e Dashboard redesenhado.
 
@@ -19,3 +22,4 @@ Cada pasta explica o marco daquela versão. Os arquivos de instalação, SBOMs e
 | 1.5.5 | Driver Edition |
 | 1.5.7 | Visual Edition |
 | 1.5.8 | Secret Art Edition |
+| 1.5.9 | Secret Art Bahia Edition |

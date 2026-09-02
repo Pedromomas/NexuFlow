@@ -149,6 +149,45 @@ export interface GamingHealth {
   warnings?: Array<{ severity?: string; code?: string; message?: string }>;
 }
 
+export interface InvestigatorEvent {
+  timestamp: number;
+  category: string;
+  action: string;
+  target: string;
+  result: string;
+  details?: string;
+  session_id?: string | null;
+}
+
+export interface InvestigatorSnapshot {
+  schema: number;
+  read_only: boolean;
+  scope: string;
+  privacy: string;
+  network_contract: {
+    default?: string;
+    local_api_origins?: string[];
+    diagnostic_targets?: string[];
+    analytics?: boolean;
+    advertising?: boolean;
+    remote_commands?: boolean;
+    policy_feed?: string;
+  };
+  events: InvestigatorEvent[];
+}
+
+export interface SignedReportEnvelope {
+  schema: number;
+  algorithm: string;
+  trust_scope: string;
+  trust_note: string;
+  public_key_base64: string;
+  key_fingerprint_sha256: string;
+  payload_sha256: string;
+  payload: Record<string, unknown>;
+  signature_base64: string;
+}
+
 export interface DriverUpdateOffer {
   title: string;
   manufacturer?: string | null;

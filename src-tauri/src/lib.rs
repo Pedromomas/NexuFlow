@@ -20,6 +20,8 @@ pub fn run() {
             commands::scan_driver_updates,
             commands::open_driver_updates,
             commands::get_history,
+            commands::get_investigator,
+            commands::sign_session_report,
             commands::get_recovery_status,
             commands::get_anti_cheat_status,
             commands::get_route_diagnostics,

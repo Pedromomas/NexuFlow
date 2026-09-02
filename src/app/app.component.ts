@@ -7,6 +7,7 @@ import {
   DriverScanReport,
   GameInfo,
   GamingHealth,
+  InvestigatorSnapshot,
   QualitySnapshot,
   RouteDiagnostics,
   SessionRecord,
@@ -14,7 +15,7 @@ import {
 } from './core/models';
 import { NexusService } from './core/nexus.service';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'appearance' | 'settings' | 'redeem';
+type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem';
 type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret';
 type AppearanceSection = 'themes' | 'accessibility';
 type LearnTopic = 'ping' | 'pc' | 'complete' | 'hardcore_safe' | 'uac';
@@ -43,6 +44,7 @@ export class AppComponent implements OnInit, OnDestroy {
   telemetry: Telemetry | null = null;
   games: GameInfo[] = [];
   history: SessionRecord[] = [];
+  investigator: InvestigatorSnapshot | null = null;
   gamingHealth: GamingHealth = {};
   routeReport: RouteDiagnostics | null = null;
   routeBusy = false;
@@ -98,6 +100,7 @@ export class AppComponent implements OnInit, OnDestroy {
     await this.refreshTelemetry();
     if (this.tick % 3 === 0) await this.refreshGames();
     if (this.tick % 15 === 0) await this.refreshHealth();
+    if (this.tab === 'investigator' && this.tick % 3 === 0) await this.refreshInvestigator();
   }
 
   private async checkCrashRecovery(): Promise<void> {
@@ -121,7 +124,9 @@ export class AppComponent implements OnInit, OnDestroy {
   setTab(tab: Tab): void {
     this.tab = tab;
     if (tab === 'history') void this.refreshHistory();
+    if (tab === 'investigator') void this.refreshInvestigator();
     if (tab === 'settings') void this.refreshHealth();
+    this.cdr.markForCheck();
     queueMicrotask(() => this.scrollToTop());
   }
 
@@ -449,9 +454,9 @@ export class AppComponent implements OnInit, OnDestroy {
     return labels[profile];
   }
 
-  exportSessionReport(): void {
+  async exportSessionReport(): Promise<void> {
     const safe = {
-      schema: 3, product: 'NexuFlow 1.5.8 Secret Art Edition', exported_at: new Date().toISOString(),
+      schema: 4, product: 'NexuFlow 1.6 Trust Edition', exported_at: new Date().toISOString(),
       requested_profile: this.profile, effective_profile: this.telemetry?.effective_profile ?? null,
       objective_mode: this.telemetry?.objective_mode ?? this.boostObjective(),
       game_id: this.telemetry?.active_game_id ?? null, quality: this.telemetry?.session_quality ?? null,
@@ -466,10 +471,28 @@ export class AppComponent implements OnInit, OnDestroy {
       privacy: { local_only: true, analytics: false, device_fingerprint: false },
       note: 'Relatório sanitizado: sem token, PID ou caminhos pessoais.'
     };
-    const blob = new Blob([JSON.stringify(safe, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-    link.download = `NexuFlow-session-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-    link.click(); URL.revokeObjectURL(link.href);
+    try {
+      const signed = await this.nexus.signSessionReport(safe);
+      const blob = new Blob([JSON.stringify(signed, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+      link.download = `NexuFlow-session-signed-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      link.click(); URL.revokeObjectURL(link.href);
+      this.message = 'Relatório exportado com assinatura Ed25519 desta instalação.';
+    } catch (error) {
+      this.message = `Não foi possível assinar o relatório: ${String(error)}`;
+    }
+    this.cdr.markForCheck();
+  }
+
+  stutterClassificationLabel(value: unknown): string {
+    const labels: Record<string, string> = {
+      no_obvious_system_pressure_in_sample: 'Nenhuma pressão evidente no sistema',
+      possible_system_pressure_in_sample: 'Possível pressão no sistema',
+      insufficient_sample: 'Amostra ainda insuficiente',
+      deferred_for_protected_game: 'Adiado durante jogo protegido'
+    };
+    const key = String(value ?? '');
+    return labels[key] ?? (key ? key.replaceAll('_', ' ') : 'Coletando');
   }
 
   get themeLabel(): string {
@@ -565,7 +588,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   scrollToTop(): void {
     const container = this.getScrollContainer();
-    if (container) {
+    if (container && typeof container.scrollTo === 'function') {
       container.scrollTo({ top: 0, behavior: this.reducedMotion ? 'auto' : 'smooth' });
       return;
     }
@@ -574,7 +597,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   scrollToBottom(): void {
     const container = this.getScrollContainer();
-    if (container) {
+    if (container && typeof container.scrollTo === 'function') {
       container.scrollTo({ top: container.scrollHeight, behavior: this.reducedMotion ? 'auto' : 'smooth' });
       return;
     }
@@ -595,7 +618,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     if (!event.altKey) return;
-    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'appearance', '5': 'settings', '6': 'redeem' };
+    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'investigator', '5': 'appearance', '6': 'settings', '7': 'redeem' };
     const tab = tabs[event.key];
     if (tab) {
       event.preventDefault();
@@ -712,6 +735,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async refreshHistory(): Promise<void> {
     this.history = await this.nexus.history();
+    this.cdr.markForCheck();
+  }
+
+  async refreshInvestigator(): Promise<void> {
+    try {
+      this.investigator = await this.nexus.investigator();
+    } catch (error) {
+      this.message = `Investigador indisponível: ${String(error)}`;
+    }
     this.cdr.markForCheck();
   }
 

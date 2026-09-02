@@ -16,6 +16,7 @@ from .hardware.nvidia import nvidia_telemetry
 from .hardware.session_guard import session_guard_report
 from .hardware.windows_gaming import windows_gaming_report
 from .history import SessionHistory
+from .investigator import record_event
 from .latency_budget import classify_latency_budget
 from .models import BoostProfile
 from .network.dns import DNSManager
@@ -175,4 +176,11 @@ def route_diagnostics(target: str = "1.1.1.1") -> dict:
         raise ValueError(
             "Protected-game compatibility mode permits route diagnostics only to neutral NexuFlow reference targets"
         )
-    return trace_route(target)
+    result = trace_route(target)
+    record_event(
+        "rede",
+        "diagnóstico de rota",
+        target,
+        details="Sondas somente leitura; nenhuma rota foi alterada.",
+    )
+    return result

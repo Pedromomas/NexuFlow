@@ -264,6 +264,25 @@ pub async fn get_history(app: AppHandle) -> Result<Value, String> {
 }
 
 #[tauri::command]
+pub async fn get_investigator(app: AppHandle) -> Result<Value, String> {
+    direct_engine(&app, &["--investigator-json"]).await
+}
+
+#[tauri::command]
+pub async fn sign_session_report(app: AppHandle, report: Value) -> Result<Value, String> {
+    let raw = serde_json::to_vec(&report).map_err(|e| format!("Invalid report: {e}"))?;
+    if raw.len() > 256 * 1024 {
+        return Err("Session report exceeds the signing size limit".into());
+    }
+    let request_path = ipc_dir()?.join(format!("{}.report.json", Uuid::new_v4()));
+    fs::write(&request_path, raw).map_err(|e| format!("Cannot create report request: {e}"))?;
+    let request_arg = request_path.to_string_lossy().to_string();
+    let result = direct_engine(&app, &["--sign-report-file", request_arg.as_str()]).await;
+    let _ = fs::remove_file(&request_path);
+    result
+}
+
+#[tauri::command]
 pub async fn get_recovery_status(app: AppHandle) -> Result<Value, String> {
     direct_engine(&app, &["--recovery-json"]).await
 }

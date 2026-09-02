@@ -3,13 +3,14 @@ $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path "$PSScriptRoot\.."
 Set-Location $Root
 
-$Version = '1.5.8'
-$ReleaseName = "NexuFlow-$Version-SecretArtEdition"
+$Version = '1.6.0'
+$ReleaseName = "NexuFlow-$Version-TrustEdition"
 foreach ($f in @('package.json','engine\pyproject.toml','src-tauri\Cargo.toml','src-tauri\tauri.conf.json')) {
   if (-not (Select-String -Path $f -SimpleMatch $Version -Quiet)) { throw "Version mismatch: $f" }
 }
 
 & "$PSScriptRoot\audit-anticheat.ps1"
+& "$PSScriptRoot\audit-network-allowlist.ps1"
 & "$PSScriptRoot\test.ps1"
 & "$PSScriptRoot\generate-sbom.ps1"
 if (-not $SkipBuild) { & "$PSScriptRoot\build.ps1" }
@@ -32,8 +33,9 @@ if ($signature.Status -ne 'Valid') {
 }
 
 $consumerFiles = @(
-  'docs\INSTALL.md','docs\RELEASE_1.5.8.md','docs\ANTI_CHEAT.md',
-  'docs\VALIDATION.md','docs\SAFETY.md','LICENSE','SBOM.cdx.json'
+  'docs\INSTALL.md','docs\RELEASE_1.6.md','docs\ANTI_CHEAT.md','docs\ANTICHEAT_RETEST.md',
+  'docs\VALIDATION.md','docs\SAFETY.md','docs\NETWORK_ALLOWLIST.md','docs\BUILD_REPRODUCIBILITY.md',
+  'TRUST_MANIFEST.md','SECURITY.md','LICENSE','SBOM.cdx.json','build\toolchain.lock.json'
 )
 foreach ($item in $consumerFiles) {
   $source = Join-Path $Root $item
@@ -49,7 +51,7 @@ $sourceFiles = @(
   'src-tauri\capabilities','src-tauri\icons','src-tauri\src','src-tauri\Cargo.toml','src-tauri\Cargo.lock',
   'src-tauri\tauri.conf.json','src-tauri\build.rs','src-tauri\app.manifest','.gitignore','angular.json',
   'ionic.config.json','LICENSE','NexuFlow.code-workspace','nexus-engine.spec','package.json','package-lock.json',
-  'postcss.config.mjs','README.md','requirements.txt','SBOM.cdx.json','tsconfig.json','tsconfig.app.json','tsconfig.spec.json'
+  'postcss.config.mjs','README.md','TRUST_MANIFEST.md','SECURITY.md','build','requirements.txt','SBOM.cdx.json','tsconfig.json','tsconfig.app.json','tsconfig.spec.json'
 )
 foreach ($item in $sourceFiles) {
   $source = Join-Path $Root $item
@@ -70,6 +72,23 @@ Get-ChildItem $SourceRelease -Recurse -File -Force |
   Where-Object { $_.Extension -in @('.pyc','.pyo') } |
   Remove-Item -Force
 
+$gitCommit = (git rev-parse HEAD 2>$null)
+$gitDirty = [bool](git status --porcelain 2>$null)
+$provenance = [pscustomobject][ordered]@{
+  schema = 1
+  product = "NexuFlow $Version"
+  source_commit = [string]$gitCommit
+  source_dirty = $gitDirty
+  reproducibility = [pscustomobject][ordered]@{
+    source_archive = 'deterministic_sorted_files_normalized_timestamps'
+    installer = 'content_verified_not_yet_claimed_bit_reproducible'
+  }
+  toolchain_lock = 'build/toolchain.lock.json'
+  verification = @('tests','anti_cheat_audit','network_allowlist','no_driver_contract','sbom','sha256_manifest')
+}
+$provenance | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $Release 'RELEASE-PROVENANCE.json') -Encoding utf8
+$provenance | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $SourceRelease 'RELEASE-PROVENANCE.json') -Encoding utf8
+
 function Write-Manifest([string]$Folder, [string]$Name) {
   Get-ChildItem $Folder -Recurse -File | Sort-Object FullName | ForEach-Object {
     $relative = $_.FullName.Substring($Folder.Length + 1).Replace('\','/')
@@ -85,7 +104,7 @@ foreach ($archive in @($zip, $sourceZip)) {
   if (Test-Path $archive) { Remove-Item $archive -Force }
 }
 Compress-Archive -Path "$Release\*" -DestinationPath $zip -CompressionLevel Optimal
-Compress-Archive -Path "$SourceRelease\*" -DestinationPath $sourceZip -CompressionLevel Optimal
+& "$PSScriptRoot\compress-deterministic.ps1" -Source $SourceRelease -Destination $sourceZip
 
 function Write-ZipHash([string]$Archive) {
   $hash = (Get-FileHash $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -106,6 +125,8 @@ $installerHash = Write-ZipHash $installerOutput
 Copy-Item (Join-Path $Release 'MANIFEST.sha256') (Join-Path $outputs "MANIFEST-$Version.sha256") -Force
 Copy-Item (Join-Path $SourceRelease 'MANIFEST-SOURCE.sha256') (Join-Path $outputs "MANIFEST-$Version-SOURCE.sha256") -Force
 Copy-Item (Join-Path $Root 'SBOM.cdx.json') (Join-Path $outputs "SBOM-$Version.cdx.json") -Force
+
+& "$PSScriptRoot\verify-release.ps1" -Path $zip -AllowUnsigned:$AllowUnsigned
 
 Write-Host "APP SHA-256: $zipHash"
 Write-Host "SOURCE SHA-256: $sourceZipHash"

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "product": "NexuFlow 1.6.0",
+  "platform": "Windows x86_64",
+  "node": "24.20.0",
+  "npm": "11.19.0",
+  "rustc": "1.98.0",
+  "cargo": "1.98.0",
+  "tauri_cli": "2.11.4",
+  "python": "3.14.7",
+  "note": "Patch versions outside lockfiles must be recorded in release provenance. Exact installer byte reproducibility is not yet claimed."
+}

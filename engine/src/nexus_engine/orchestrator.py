@@ -21,6 +21,7 @@ from .hardware.power import PowerPlanManager
 from .hardware.process import ProcessOptimizer
 from .hardware.services import ServiceManager
 from .history import SessionHistory
+from .investigator import record_event
 from .models import BoostProfile
 from .network.dns import DNSManager
 from .network.firewall import FirewallManager
@@ -50,6 +51,13 @@ class NexusOrchestrator:
     def _checkpoint(self, state: dict, key: str, value: Any) -> None:
         state[key] = value
         self.state_store.save(state)
+        record_event(
+            "sistema",
+            "snapshot de rollback salvo",
+            key,
+            details="Estado necessário para restauração; conteúdo pessoal não é registrado.",
+            session_id=state.get("session_id"),
+        )
 
     @staticmethod
     def _anti_cheat_safe(profile: BoostProfile) -> bool:
@@ -149,6 +157,13 @@ class NexusOrchestrator:
             "warnings": [],
         }
         self.state_store.save(state)
+        record_event(
+            "sessão",
+            "BOOST iniciado",
+            game.get("display_name") or game.get("id"),
+            details=f"Perfil efetivo: {profile.value}; protegido: {protected}",
+            session_id=state["session_id"],
+        )
 
         report: dict = {
             "session_id": state["session_id"],
@@ -345,6 +360,13 @@ class NexusOrchestrator:
 
         state["report"] = report
         self.state_store.save(state)
+        record_event(
+            "sessão",
+            "plano de otimização concluído",
+            game.get("display_name") or game.get("id"),
+            details="As ações e bloqueios aplicados foram registrados no snapshot local.",
+            session_id=state["session_id"],
+        )
         return report
 
     def capture_quality_after(self) -> dict | None:
@@ -440,6 +462,13 @@ class NexusOrchestrator:
         state.setdefault("adaptive_events", []).append(event)
         state["adaptive_events"] = state["adaptive_events"][-20:]
         self.state_store.save(state)
+        record_event(
+            "rede",
+            "reavaliação somente leitura",
+            target,
+            details="Nenhuma rota, firewall ou conexão do jogo foi alterada.",
+            session_id=state.get("session_id"),
+        )
         return event
 
     def restore_all(self) -> dict:
@@ -447,6 +476,12 @@ class NexusOrchestrator:
         if not state.get("active"):
             return {"restored": False, "message": "No active NexuFlow snapshot"}
         errors: list[str] = []
+        record_event(
+            "sessão",
+            "rollback iniciado",
+            (state.get("game") or {}).get("display_name", "sessão ativa"),
+            session_id=state.get("session_id"),
+        )
 
         # Capture the final quality/health picture before rollback so session
         # history can show a genuine before/after comparison.
@@ -520,6 +555,14 @@ class NexusOrchestrator:
             self.state_store.save(state)
         else:
             self.state_store.clear()
+        record_event(
+            "sessão",
+            "rollback concluído",
+            (state.get("game") or {}).get("display_name", "sessão"),
+            result="ok" if not errors else "aviso",
+            details="Estado restaurado." if not errors else "; ".join(errors),
+            session_id=state.get("session_id"),
+        )
         return {
             "restored": not errors,
             "errors": errors,

@@ -1,4 +1,4 @@
-# Validação — NexuFlow 1.5.8
+# Validação — NexuFlow 1.6
 
 ## Portões automatizados
 

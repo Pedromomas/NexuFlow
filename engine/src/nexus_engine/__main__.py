@@ -25,6 +25,8 @@ from nexus_engine.telemetry import (
     telemetry,
 )
 from nexus_engine.preflight import preflight_report
+from nexus_engine.investigator import investigator_snapshot
+from nexus_engine.report_signing import sign_report, verify_report
 
 
 PUBLIC_PROFILE_VALUES = ("ping", "pc", "complete", "hardcore_safe")
@@ -118,6 +120,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--driver-scan-json", action="store_true")
     parser.add_argument("--open-driver-updates-json", action="store_true")
     parser.add_argument("--history-json", action="store_true")
+    parser.add_argument("--investigator-json", action="store_true")
+    parser.add_argument("--sign-report-file", type=Path)
+    parser.add_argument("--verify-report-file", type=Path)
     parser.add_argument("--preflight-json", action="store_true")
     parser.add_argument("--recovery-json", action="store_true")
     parser.add_argument("--anti-cheat-json", nargs="?", const="", metavar="GAME_ID")
@@ -150,6 +155,18 @@ def main() -> None:
             emit(open_windows_driver_updates(), args.output_file); return
         if args.history_json:
             emit(session_history(50), args.output_file); return
+        if args.investigator_json:
+            emit(investigator_snapshot(100), args.output_file); return
+        if args.sign_report_file:
+            if args.sign_report_file.stat().st_size > 256 * 1024:
+                raise ValueError("Session report exceeds the signing size limit")
+            payload = json.loads(args.sign_report_file.read_text(encoding="utf-8"))
+            emit(sign_report(payload), args.output_file); return
+        if args.verify_report_file:
+            if args.verify_report_file.stat().st_size > 512 * 1024:
+                raise ValueError("Signed report exceeds the verification size limit")
+            envelope = json.loads(args.verify_report_file.read_text(encoding="utf-8"))
+            emit({"valid": verify_report(envelope), "algorithm": "Ed25519"}, args.output_file); return
         if args.preflight_json:
             emit(preflight_report(), args.output_file); return
         if args.recovery_json:

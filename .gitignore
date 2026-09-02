@@ -12,6 +12,8 @@ engine/dist/
 engine/.pytest-*/
 engine/src/*.egg-info/
 release/
+output/
+tmp/
 MANIFEST.sha256
 nexus-engine.spec
 __pycache__/

@@ -6,7 +6,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -25,6 +25,8 @@ from nexus_engine.daemon import daemon_is_running, stop_daemon
 from nexus_engine.hardware.driver_center import open_windows_driver_updates, scan_driver_updates
 from nexus_engine.network.quality import NetworkQualityMonitor, QUALITY_TARGETS
 from nexus_engine.orchestrator import NexusOrchestrator
+from nexus_engine.investigator import investigator_snapshot
+from nexus_engine.report_signing import sign_report
 from nexus_engine.state import pending_manual_state
 from nexus_engine.telemetry import (
     anti_cheat_status,
@@ -191,6 +193,19 @@ def post_open_driver_updates() -> dict:
 @app.get("/api/v1/history")
 def get_history(limit: int = Query(default=30, ge=1, le=200)) -> list[dict]:
     return session_history(limit)
+
+
+@app.get("/api/v1/investigator")
+def get_investigator(limit: int = Query(default=100, ge=1, le=200)) -> dict:
+    return investigator_snapshot(limit)
+
+
+@app.post("/api/v1/reports/sign", dependencies=[Depends(require_api_token)])
+def post_sign_report(payload: dict = Body(...)) -> dict:
+    try:
+        return sign_report(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/v1/recovery")

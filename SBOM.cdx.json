@@ -1,13 +1,13 @@
 ﻿{
     "bomFormat":  "CycloneDX",
     "specVersion":  "1.5",
-    "serialNumber":  "urn:uuid:6166ce68-b033-41cd-970c-e95ded657688",
+    "serialNumber":  "urn:uuid:6e786631-3600-4000-8000-000000000160",
     "version":  1,
     "metadata":  {
                      "component":  {
                                        "type":  "application",
                                        "name":  "NexuFlow",
-                                       "version":  "1.5.8"
+                                       "version":  "1.6.0"
                                    }
                  },
     "components":  [
@@ -4442,8 +4442,8 @@
                        {
                            "type":  "library",
                            "name":  "nexuflow",
-                           "version":  "1.5.8",
-                           "purl":  "pkg:cargo/nexuflow@1.5.8"
+                           "version":  "1.6.0",
+                           "purl":  "pkg:cargo/nexuflow@1.6.0"
                        },
                        {
                            "type":  "library",

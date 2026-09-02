@@ -42,7 +42,7 @@ describe('AppComponent', () => {
   it('keeps Appearance separate from system settings and exposes eight original themes', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
-    fixture.componentInstance.tab = 'appearance';
+    fixture.componentInstance.setTab('appearance');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Um NexuFlow com a sua energia.');
     expect(fixture.nativeElement.textContent).toContain('Arte original, não afiliado');
@@ -66,7 +66,12 @@ describe('AppComponent', () => {
     localStorage.clear();
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
-    fixture.componentInstance.tab = 'appearance';
+    fixture.componentInstance.tab = 'redeem';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.vault-mystery')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.vault-cover')).toBeNull();
+
+    fixture.componentInstance.setTab('appearance');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.theme-tile').length).toBe(8);
 
@@ -78,6 +83,7 @@ describe('AppComponent', () => {
     expect(fixture.componentInstance.uiTheme).toBe('secret');
     expect(document.documentElement.dataset['theme']).toBe('secret');
     expect(fixture.nativeElement.querySelectorAll('.theme-tile').length).toBe(9);
+    expect(fixture.nativeElement.querySelector('.theme-mascot')?.getAttribute('src')).toContain('nexuflow-secret-mascot.png');
     expect(localStorage.getItem('nexuflow_secret_art_unlocked_v1')).toBe('1');
     fixture.componentInstance.setTheme('nebula');
     fixture.destroy();
