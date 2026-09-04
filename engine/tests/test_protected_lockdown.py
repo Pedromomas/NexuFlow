@@ -23,7 +23,7 @@ def test_policy_report_exposes_maximum_compatibility_lockdown(monkeypatch):
     assert report["lockdown"] == "maximum_compatibility"
     assert report["capabilities"]["process_optimization"] is False
     assert report["capabilities"]["power_plan"] is True
-    assert report["policy_reviewed_at"] == "2026-09-01"
+    assert report["policy_reviewed_at"] == "2026-09-04"
 
 
 def test_low_level_firewall_rejects_protected_title_without_touching_disk():

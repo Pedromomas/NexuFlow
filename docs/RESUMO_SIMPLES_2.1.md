@@ -1,6 +1,6 @@
 # NexuFlow — documentação resumida
 
-Versão atual de testes: **2.1.0-beta.2 — Portas Abertas**
+Versão atual de testes: **2.1.0-beta.3 — Portas Abertas**
 
 ## O que é o NexuFlow
 
@@ -29,6 +29,7 @@ O aplicativo não promete acabar completamente com o lag e não altera o código
 - não intercepta ou modifica pacotes da partida;
 - não altera arquivos ou serviços do anticheat;
 - jogos desconhecidos entram em modo conservador automaticamente.
+- Roblox usa apenas ajustes comuns e reversíveis do Windows/rede conforme Ping, PC ou Completo, sem alterar o cliente do jogo.
 
 O Safe Core é obrigatório e não depende do botão da Central do PC. Desligar a automação significa somente que não existe otimização ativa.
 
@@ -89,6 +90,9 @@ O Safe Core é obrigatório e não depende do botão da Central do PC. Desligar 
 - proteções anticheat comparadas com a versão atual;
 - auditores de segurança e de rede executados novamente;
 - proteção automática confirmada como independente da interface.
+- 271 testes do motor/API e 1 teste do host desktop aprovados na beta 3;
+- matriz completa dos quatro objetivos públicos executada para Riot, Valve, EAC, BattlEye, Roblox e jogos desconhecidos;
+- políticas oficiais relidas em 04/09/2026, sem alegar certificação ou risco zero.
 
 ### Central do PC reformulada
 
@@ -136,7 +140,8 @@ Na beta.2, cada coleção também recebeu uma segunda arte própria, símbolo da
 
 ### Melhorias gerais
 
-- versão atualizada para 2.1.0-beta.2;
+- versão atualizada para 2.1.0-beta.3;
+- corrigido o carregamento do CSS no aplicativo instalado e adicionada uma barreira automatizada contra esse tipo de pacote quebrado;
 - projeto do VS Code configurado para ignorar pastas pesadas de compilação;
 - código-fonte empacotado sem caches e arquivos temporários;
 - novo instalador e novo pacote de código-fonte gerados;

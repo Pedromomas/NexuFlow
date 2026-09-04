@@ -1,12 +1,13 @@
 {
   "name": "nexuflow",
-  "version": "2.1.0-beta.2",
+  "version": "2.1.0-beta.3",
   "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "ionic:serve": "ng serve --host 127.0.0.1 --port 8100",
     "build:web": "ng build",
+    "build:desktop": "ng build --base-href ./ && node scripts/verify-desktop-bundle.mjs",
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",

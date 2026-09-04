@@ -7,7 +7,19 @@ Base recebida: `NexuFlow-1.7.0-InsightEdition-Source.zip`
 
 A base 1.7 foi usada somente como evidência. O manifesto SHA-256 do pacote conferiu **194 de 194 arquivos**, sem arquivo ausente ou divergente. Os auditores `anti-cheat-audit.ps1`, `audit-anticheat.ps1` e `audit-network-allowlist.ps1` passaram na fonte 1.7 e na árvore atual.
 
-Isto demonstra aderência aos contratos do projeto, não certificação das fabricantes e não garantia de ban zero. Somente Riot, Valve e os operadores de EAC/BattlEye decidem a aplicação de suas regras.
+Isto demonstra aderência aos contratos do projeto, não certificação das fabricantes e não garantia de ban zero. Somente Riot, Valve, Roblox e os operadores de EAC/BattlEye decidem a aplicação de suas regras.
+
+## Auditoria final da beta 3
+
+- 271 testes Python/API/engine aprovados, incluindo uma matriz de 50 combinações entre jogos e objetivos públicos;
+- 1 teste Rust do host desktop aprovado, confirmando encerramento somente após parada e rollback explícitos;
+- build desktop validado contra caminhos absolutos, arquivos ausentes e CSS adiado incompatível com a CSP;
+- políticas oficiais de Riot Vanguard, Valve VAC/Trusted Mode, Roblox, EAC e BattlEye relidas em 04/09/2026;
+- a interface instalada da beta 3 foi testada pelo responsável do projeto e confirmada como funcional.
+
+A matriz cobre Ping, PC, Completo e Hardcore Safe em VALORANT, LoL, CS2, Fortnite, Fall Guys, PUBG, Rainbow Six Siege, DayZ e Arma 3. Jogos desconhecidos falham fechados em todos os quatro objetivos. Roblox preserva o objetivo escolhido, mas continua sem leitura de memória, injeção, alteração de arquivo, suspensão de processo ou automação de entrada.
+
+Esta auditoria automatizada não substitui partidas reais nem certificação dos fornecedores. A validação física em versões atuais dos jogos continua pendente antes de uma afirmação pública de compatibilidade testada.
 
 ## Proteções preservadas
 
@@ -52,6 +64,5 @@ Nenhum placeholder deve ser aceito e a verificação de assinatura nunca deve se
 - partidas reais atuais com VALORANT, LoL, CS2 e jogos EAC/BattlEye;
 - smoke test em instalações limpas de Windows 10 e 11;
 - teste físico em Intel, Realtek e Wi-Fi;
-- revisão das políticas oficiais após patches dos anticheats;
+- nova revisão das políticas oficiais após patches futuros dos anticheats;
 - assinatura Authenticode comercial ou aprovação em programa equivalente.
-

@@ -1,8 +1,8 @@
-# NexuFlow 1.5 — Anti-Cheat Compatibility Policy
+# NexuFlow 2.1 — Anti-Cheat Compatibility Policy
 
-**Policy version:** 2026.09.01
-**Last reviewed:** 2026-09-01
-**Scope:** VALORANT, League of Legends, Counter-Strike 2 e sinais genéricos EAC/BattlEye
+**Policy version:** 2026.09.04
+**Last reviewed:** 2026-09-04
+**Scope:** VALORANT, League of Legends, Counter-Strike 2, Roblox e sinais genéricos EAC/BattlEye
 **Goal:** minimize interaction with anti-cheat protected games rather than trying to hide, bypass, weaken or evade anti-cheat software.
 
 > No third-party optimizer can honestly guarantee a zero-percent enforcement risk. Riot and Valve control their anti-cheat systems, enforcement and future policy changes. NexuFlow therefore uses a deliberately conservative compatibility lockdown and gives up optimizations that would touch a protected game.
@@ -34,6 +34,23 @@ Official sources reviewed:
 - Steam Support — Valve Anti-Cheat (VAC): https://help.steampowered.com/en/faqs/view/571A-97DA-70E9-FF74
 - Steam Support — VAC secure-server connection errors: https://help.steampowered.com/en/faqs/view/22C0-03D0-AE4B-04E8
 - Steam Support — I've been VAC banned: https://help.steampowered.com/faqs/view/647C-5CC1-7EA9-3C29
+
+### Roblox
+
+Roblox Support states that modified clients and software that changes how Roblox works are not allowed. It also documents failures caused by third-party software interference and suspended processes. NexuFlow therefore treats Roblox as a known title but does not modify its files, inject into it, suspend it, inspect its memory or automate input. The Roblox profile only selects ordinary reversible Windows/network policies allowed by the user's Ping, PC or Complete objective.
+
+Official source reviewed:
+
+- Roblox Support — Anti-cheat Messages: https://en.help.roblox.com/hc/en-us/articles/24275616578708-Anti-cheat-Messages
+
+### Easy Anti-Cheat / BattlEye
+
+EAC and BattlEye protect many titles whose executable names and runtime details may change. NexuFlow uses a fail-closed catalog plus read-only process/service-name signals. If a generic EAC/BattlEye runtime is active and the title cannot be identified safely, the engine selects `protected_safe`, makes no process-local optimization and does not guess that the game is Roblox or an unprotected title.
+
+Official sources reviewed:
+
+- Easy Anti-Cheat — Player Support: https://www.easy.ac/support/articles
+- BattlEye — FAQ: https://www.battleye.com/support/faq/
 
 ## Maximum-compatibility lockdown
 

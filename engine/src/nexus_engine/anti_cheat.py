@@ -15,8 +15,8 @@ KNOWN_MUTABLE_GAME_IDS = frozenset({"roblox"})
 
 # Policy metadata is intentionally shipped in the engine so every transport
 # (Tauri, FastAPI and CLI) reports the same compatibility posture.
-POLICY_VERSION = "2026.09.01"
-POLICY_REVIEWED_AT = "2026-09-01"
+POLICY_VERSION = "2026.09.04"
+POLICY_REVIEWED_AT = "2026-09-04"
 OFFICIAL_POLICY_SOURCES = (
     "https://www.riotgames.com/en/DevRel/vanguard-faq",
     "https://support-developer.riotgames.com/hc/en-us/articles/28021427366163-Vanguard",
@@ -24,6 +24,9 @@ OFFICIAL_POLICY_SOURCES = (
     "https://help.steampowered.com/en/faqs/view/09A0-4879-4353-EF95",
     "https://help.steampowered.com/en/faqs/view/571A-97DA-70E9-FF74",
     "https://help.steampowered.com/en/faqs/view/22C0-03D0-AE4B-04E8",
+    "https://en.help.roblox.com/hc/en-us/articles/24275616578708-Anti-cheat-Messages",
+    "https://www.easy.ac/support/articles",
+    "https://www.battleye.com/support/faq/",
 )
 
 # Vanguard's user-mode components. The kernel driver is deliberately not

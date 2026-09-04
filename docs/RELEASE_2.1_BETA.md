@@ -1,4 +1,10 @@
-# NexuFlow 2.1.0-beta.2 — Portas Abertas
+# NexuFlow 2.1.0-beta.3 — Portas Abertas
+
+## Correcao de empacotamento da beta 3
+
+- o CSS do desktop deixa de depender de um evento `onload` inline bloqueado pela CSP do Tauri;
+- o build de release valida que folhas de estilo e modulos existem e usam caminhos relativos antes de criar o instalador;
+- a mesma verificacao roda cedo no GitHub Actions e novamente dentro do build Tauri, impedindo a publicacao de uma janela sem estilos.
 
 Este é um marco de validação, não uma release comercial.
 
@@ -17,6 +23,7 @@ Este é um marco de validação, não uma release comercial.
 - cada universo secreto ganhou painel de arte complementar, símbolo próprio e ícones próprios na navegação;
 - Edição Origem usa portais e prismas, Rio Pulse usa sinais e ondas, e Kiwi Signal usa guardião, sementes e folhas;
 - chave definitiva do atualizador criada fora do repositório e canal beta assinado validado no GitHub Releases.
+- política anticheat relida nas fontes oficiais em 04/09/2026 e matriz ampliada para 271 testes do motor/API.
 
 ## Decisões que não foram falsificadas
 
@@ -28,7 +35,7 @@ Para o futuro controle de trial, a preferência é uma chave de instalação ale
 
 1. manter o backup da chave definitiva do updater e nunca colocá-la no repositório — concluído;
 2. tornar público o canal oficial quando manifesto, SECURITY.md e política de privacidade estiverem prontos — pendente;
-3. testar o upgrade assinado entre beta.1 e beta.2 e confirmar rejeição de assinatura inválida — pendente;
+3. testar o upgrade assinado entre beta.2 e beta.3 e confirmar rejeição de assinatura inválida — pendente;
 4. concluir a matriz física/anticheat descrita em `SECURITY_AUDIT_2.1.md` — pendente;
 5. obter assinatura Authenticode ou aprovação SignPath para remover o aviso de editor desconhecido — pendente;
 6. somente depois integrar backend de conta e Mercado Pago em ambiente de testes — pendente.

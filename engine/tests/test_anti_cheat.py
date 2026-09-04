@@ -1,5 +1,72 @@
+import pytest
+
 from nexus_engine.anti_cheat import anti_cheat_policy_report, effective_profile, is_protected_game
 from nexus_engine.models import BoostProfile
+
+
+PUBLIC_OBJECTIVES = (
+    BoostProfile.PING,
+    BoostProfile.PC,
+    BoostProfile.COMPLETE,
+    BoostProfile.HARDCORE_SAFE,
+)
+
+
+@pytest.mark.parametrize(
+    ("game_id", "expected"),
+    [
+        ("valorant", BoostProfile.RIOT_SAFE),
+        ("lol", BoostProfile.RIOT_SAFE),
+        ("cs2", BoostProfile.VALVE_SAFE),
+        ("fortnite", BoostProfile.PROTECTED_SAFE),
+        ("fallguys", BoostProfile.PROTECTED_SAFE),
+        ("pubg", BoostProfile.PROTECTED_SAFE),
+        ("rainbow6", BoostProfile.PROTECTED_SAFE),
+        ("dayz", BoostProfile.PROTECTED_SAFE),
+        ("arma3", BoostProfile.PROTECTED_SAFE),
+    ],
+)
+@pytest.mark.parametrize("requested", PUBLIC_OBJECTIVES)
+def test_every_public_objective_is_forced_through_the_expected_protected_overlay(game_id, expected, requested):
+    assert effective_profile(requested, game_id) is expected
+
+
+@pytest.mark.parametrize("requested", PUBLIC_OBJECTIVES)
+def test_unknown_titles_fail_closed_for_every_public_objective(requested):
+    assert effective_profile(requested, "future-anticheat-game") is BoostProfile.UNKNOWN_SAFE
+
+
+def test_roblox_keeps_each_public_objective_and_auto_uses_the_dedicated_profile():
+    assert effective_profile(BoostProfile.AUTO, "roblox") is BoostProfile.ROBLOX
+    for requested in PUBLIC_OBJECTIVES:
+        assert effective_profile(requested, "roblox") is requested
+
+
+@pytest.mark.parametrize("game_id", ["valorant", "lol", "cs2", "fortnite", "fallguys", "pubg", "rainbow6", "dayz", "arma3"])
+def test_protected_modes_expose_only_objective_scoped_safe_capabilities(game_id):
+    expected = effective_profile(BoostProfile.COMPLETE, game_id)
+    reports = {
+        objective: anti_cheat_policy_report(game_id, objective, expected)
+        for objective in PUBLIC_OBJECTIVES
+    }
+
+    for report in reports.values():
+        assert report["active"] is True
+        assert report["lockdown"] == "maximum_compatibility"
+        assert report["capabilities"]["process_optimization"] is False
+        assert report["capabilities"]["dll_or_code_injection"] is False
+        assert report["capabilities"]["game_socket_inspection"] is False
+        assert report["capabilities"]["anti_cheat_service_or_driver_access"] is False
+        assert report["capabilities"]["powershell_execution_during_protected_session"] is False
+
+    assert "dns_benchmark_without_live_resolver_change" in reports[BoostProfile.PING]["allowed_features"]
+    assert "temporary_system_power_plan" not in reports[BoostProfile.PING]["allowed_features"]
+    assert "temporary_system_power_plan" in reports[BoostProfile.PC]["allowed_features"]
+    assert "dns_benchmark_without_live_resolver_change" not in reports[BoostProfile.PC]["allowed_features"]
+    assert "temporary_system_power_plan" in reports[BoostProfile.COMPLETE]["allowed_features"]
+    assert "dns_benchmark_without_live_resolver_change" in reports[BoostProfile.COMPLETE]["allowed_features"]
+    assert "temporary_system_power_plan" not in reports[BoostProfile.HARDCORE_SAFE]["allowed_features"]
+    assert "dns_benchmark_without_live_resolver_change" not in reports[BoostProfile.HARDCORE_SAFE]["allowed_features"]
 
 
 def test_riot_titles_force_riot_safe_even_from_aggressive():

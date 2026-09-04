@@ -74,6 +74,7 @@ jobs:
         shell: pwsh
         run: |
           npm run test:web
+          npm run build:desktop
           python -m pytest engine/tests app/tests -q
 
       - name: Gerar sidecar sem janela de console

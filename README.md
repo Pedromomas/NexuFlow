@@ -9,7 +9,7 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão em validação: 2.1.0-beta.2 — Portas Abertas**
+**Versão em validação: 2.1.0-beta.3 — Portas Abertas**
 
 Safe Core obrigatório e independente da automação, entrada transparente com conta opcional, Central do PC redesenhada, três universos secretos completos, DNS comparativo ao vivo, speed test limitado e canal de atualização assinado. Veja [o marco 2.1 beta](docs/RELEASE_2.1_BETA.md), [a auditoria de segurança](docs/SECURITY_AUDIT_2.1.md) e [as notas da 1.8](docs/RELEASE_1.8.md).
 
@@ -73,7 +73,7 @@ Para desenvolver com o motor funcionando, use `npm run dev` ou a tarefa do VS Co
 
 ## Anti-cheat: políticas autoritativas no backend
 
-NexuFlow não promete “0% chance de ban”: somente os fornecedores dos jogos controlam enforcement. A política foi revisada novamente em **01/09/2026** contra as páginas oficiais de Vanguard, Termos da Riot, VAC e CS2 Trusted Mode. Em vez de tentar esconder ou contornar anticheat, o backend entra em **maximum-compatibility lockdown** e deliberadamente abre mão de otimizações que tocariam o jogo protegido.
+NexuFlow não promete “0% chance de ban”: somente os fornecedores dos jogos controlam enforcement. A política foi revisada novamente em **04/09/2026** contra as páginas oficiais de Vanguard, Termos da Riot, VAC/CS2 Trusted Mode, Roblox, EAC e BattlEye. Em vez de tentar esconder ou contornar anticheat, o backend entra em **maximum-compatibility lockdown** e deliberadamente abre mão de otimizações que tocariam o jogo protegido.
 
 ### Riot Safe — VALORANT / League of Legends
 
