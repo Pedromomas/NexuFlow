@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path "$PSScriptRoot\.."
 Set-Location $Root
 
-$Version = '1.6.0'
-$ReleaseName = "NexuFlow-$Version-TrustEdition"
+$Version = '2.1.0-beta.1'
+$ReleaseName = "NexuFlow-$Version-PortasAbertas"
 foreach ($f in @('package.json','engine\pyproject.toml','src-tauri\Cargo.toml','src-tauri\tauri.conf.json')) {
   if (-not (Select-String -Path $f -SimpleMatch $Version -Quiet)) { throw "Version mismatch: $f" }
 }
@@ -18,6 +18,9 @@ if (-not $SkipBuild) { & "$PSScriptRoot\build.ps1" }
 $Release = Join-Path $Root "release\$ReleaseName"
 $SourceRelease = Join-Path $Root "release\$ReleaseName-Source"
 foreach ($target in @($Release, $SourceRelease)) {
+  $releaseRoot = [IO.Path]::GetFullPath((Join-Path $Root 'release')) + [IO.Path]::DirectorySeparatorChar
+  if (-not [IO.Path]::GetFullPath($target).StartsWith($releaseRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Release target outside staging root.' }
+  if ((Get-Item -LiteralPath $target -ErrorAction SilentlyContinue).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Release staging may not be a link.' }
   if (Test-Path $target) { Remove-Item $target -Recurse -Force }
   New-Item -ItemType Directory -Force $target | Out-Null
 }
@@ -33,7 +36,7 @@ if ($signature.Status -ne 'Valid') {
 }
 
 $consumerFiles = @(
-  'docs\INSTALL.md','docs\RELEASE_1.6.md','docs\ANTI_CHEAT.md','docs\ANTICHEAT_RETEST.md',
+  'docs\INSTALL.md','docs\RELEASE_1.6.md','docs\RELEASE_1.6.1.md','docs\RELEASE_1.7.md','docs\RELEASE_1.8.md','docs\RELEASE_2.1_BETA.md','docs\SECURITY_AUDIT_2.1.md','docs\UPDATER_1.8.md','docs\COMPETITOR_REVIEW_1.7.md','docs\ANTI_CHEAT.md','docs\ANTICHEAT_RETEST.md',
   'docs\VALIDATION.md','docs\SAFETY.md','docs\NETWORK_ALLOWLIST.md','docs\BUILD_REPRODUCIBILITY.md',
   'TRUST_MANIFEST.md','SECURITY.md','LICENSE','SBOM.cdx.json','build\toolchain.lock.json'
 )

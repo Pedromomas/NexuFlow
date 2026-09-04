@@ -113,7 +113,28 @@ def run_daemon(profile: BoostProfile, ready: Callable[[dict], None]) -> None:
     }
     _write_daemon(status)
 
-    running = first_running_game(catalog)
+    # Return control to the desktop as soon as the protected daemon is alive.
+    # Baseline collection and per-game preparation continue in this same
+    # process, so the BOOST click never looks frozen for 20 seconds. Safety is
+    # unchanged: no mutation occurs before optimize_game finishes its checks.
+    ready({
+        "ok": True,
+        "action": "start",
+        "message": (
+            f"Fluxo Vivo ativado. Preparando {running['display_name']} com segurança…"
+            if (running := first_running_game(catalog))
+            else "Fluxo Vivo ativado. O próximo jogo suportado será preparado automaticamente."
+        ),
+        "data": {
+            "pid": os.getpid(),
+            "boosted_game": None,
+            "effective_profile": None,
+            "preparing": bool(running),
+            "interrupted_restore": interrupted_restore,
+        },
+        "warnings": [],
+    })
+
     initial_report = None
     if running:
         try:
@@ -130,28 +151,6 @@ def run_daemon(profile: BoostProfile, ready: Callable[[dict], None]) -> None:
         except Exception as exc:
             status["last_error"] = str(exc)
             _write_daemon(status)
-
-    ready({
-        "ok": True,
-        "action": "start",
-        "message": (
-            f"{running['display_name']} otimizado. NexuFlow monitorando qualidade em tempo real."
-            if boosted
-            else "NexuFlow armado. O próximo jogo suportado será otimizado automaticamente."
-        ),
-        "data": {
-            "pid": os.getpid(),
-            "boosted_game": status["boosted_game"],
-            "effective_profile": status["effective_profile"],
-            "interrupted_restore": interrupted_restore,
-            "report": initial_report,
-        },
-        "warnings": (
-            (initial_report or {}).get("warnings", [])
-            if initial_report
-            else ([status["last_error"]] if status["last_error"] else [])
-        ),
-    })
 
     try:
         while not sf.exists():

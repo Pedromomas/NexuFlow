@@ -1,0 +1,109 @@
+name: Release assinada do NexuFlow
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag SemVer, por exemplo v2.1.0-beta.2"
+        required: true
+        type: string
+      prerelease:
+        description: "Publicar como pre-release"
+        required: true
+        default: true
+        type: boolean
+      security_required:
+        description: "Correção crítica obrigatória (não usar para tema ou melhoria comum)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: signed-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  windows-x64:
+    runs-on: windows-latest
+    environment: signed-release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validar identidade da release
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $packageVersion = (Get-Content -Raw ".\package.json" | ConvertFrom-Json).version
+          $tauriVersion = (Get-Content -Raw ".\src-tauri\tauri.conf.json" | ConvertFrom-Json).version
+          $cargoVersion = Select-String -Path ".\src-tauri\Cargo.toml" -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1
+          if (-not $cargoVersion) { throw "Versao ausente em src-tauri/Cargo.toml" }
+          $cargoVersion = $cargoVersion.Matches[0].Groups[1].Value
+          if ($packageVersion -ne $tauriVersion -or $packageVersion -ne $cargoVersion) {
+            throw "Versoes divergentes: package=$packageVersion tauri=$tauriVersion cargo=$cargoVersion"
+          }
+          $expectedTag = "v$packageVersion"
+          if ($env:RELEASE_TAG -cne $expectedTag) {
+            throw "Tag invalida. Use exatamente $expectedTag"
+          }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar Rust estavel
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Instalar dependências reproduzíveis
+        shell: pwsh
+        run: |
+          npm ci
+          python -m pip install --upgrade pip
+          python -m pip install -e ".\engine[dev]"
+
+      - name: Testar interface e motor
+        shell: pwsh
+        run: |
+          npm run test:web
+          python -m pytest engine/tests app/tests -q
+
+      - name: Gerar sidecar sem janela de console
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --noupx --name nexus-engine --paths ".\engine\src" --add-data ".\engine\src\nexus_engine\data;data" ".\engine\src\nexus_engine\__main__.py" --distpath ".\engine\dist" --workpath ".\engine\build"
+          New-Item -ItemType Directory -Force ".\src-tauri\binaries" | Out-Null
+          Copy-Item ".\engine\dist\nexus-engine.exe" ".\src-tauri\binaries\nexus-engine-x86_64-pc-windows-msvc.exe" -Force
+
+      - name: Recusar release sem segredos de assinatura
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) { throw "TAURI_SIGNING_PRIVATE_KEY ausente" }
+          if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD)) { throw "TAURI_SIGNING_PRIVATE_KEY_PASSWORD ausente" }
+
+      - name: Criar draft, instalador, assinatura e latest.json
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ inputs.tag }}
+          releaseName: "NexuFlow ${{ inputs.tag }}"
+          releaseBody: ${{ inputs.security_required && '[SECURITY-REQUIRED] Correção crítica assinada. O BOOST fica indisponível até a instalação terminar. Publicar somente após upgrade N → N+1 e teste de assinatura inválida.' || 'Atualização assinada do NexuFlow. Pode ser adiada pelo usuário.' }}
+          releaseDraft: true
+          prerelease: ${{ inputs.prerelease }}
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: --features signed-updater --config src-tauri/tauri.updater.release.conf.json

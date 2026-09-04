@@ -7,6 +7,9 @@ export interface GameInfo {
   running: boolean;
   executable?: string | null;
   pid?: number | null;
+  protection?: string;
+  validation?: string;
+  live_match_validated?: boolean;
 }
 
 export interface QualitySnapshot {
@@ -70,6 +73,7 @@ export interface LatencyBudget {
 }
 
 export interface Telemetry {
+  connection_history?: ConnectionHistory;
   timestamp: number;
   engine_online: boolean;
   cpu_percent: number;
@@ -96,6 +100,51 @@ export interface Telemetry {
   session_quality?: SessionQuality | null;
   latency_budget?: LatencyBudget | null;
   recovery_required?: boolean;
+}
+
+export interface ConnectionMetric extends QualitySnapshot {
+  name: string;
+  minimum_ms: number | null;
+  maximum_ms: number | null;
+  p95_ms: number | null;
+  spikes: number;
+  status: string;
+}
+export interface ConnectionHistory {
+  stale: boolean;
+  target: string | null;
+  summary: ConnectionMetric;
+  samples: Array<{timestamp: number; target: string; latency_ms: number | null}>;
+}
+export interface ConnectionScan {
+  schema: number;
+  kind: string;
+  measured_at: number;
+  results: ConnectionMetric[];
+  conclusion: string;
+  method: string;
+}
+export interface DnsRanking {
+  measured_at: number;
+  recommendation: string | null;
+  results: Array<{provider: string; servers: string[]; median_ms: number | null; success_rate: number; samples: number; successful: number; eligible: boolean}>;
+  method: string;
+  note: string;
+}
+export interface SpeedTestResult {
+  schema: number;
+  kind: 'bounded_speed_test';
+  measured_at: number;
+  provider: string;
+  endpoint: string;
+  download_mbps: number;
+  upload_mbps: number;
+  download_samples_mbps: number[];
+  upload_samples_mbps: number[];
+  transferred_bytes_max: number;
+  read_only: boolean;
+  mutation_performed: boolean;
+  note: string;
 }
 
 export interface EngineResponse {

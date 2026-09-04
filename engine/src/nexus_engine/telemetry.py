@@ -23,6 +23,7 @@ from .network.dns import DNSManager
 from .network.interfaces import InterfaceManager
 from .network.nic_health import nic_health_report
 from .network.quality import QUALITY_TARGETS, current_quality, quality_delta
+from .network.connection_center import connection_history
 from .network.route_diagnostics import trace_route
 from .state import StateStore
 from .policy_runtime import policy_status
@@ -85,6 +86,7 @@ def telemetry() -> dict:
         "nexus_score": quality.get("nexus_score"),
         "quality_grade": quality.get("grade"),
         "quality_target": quality.get("target"),
+        "connection_history": connection_history(),
         "quality_window_seconds": quality.get("span_seconds"),
         "network_status": "Online" if quality.get("latency_ms") is not None else "Degraded",
         "active_game": game["display_name"] if game else None,

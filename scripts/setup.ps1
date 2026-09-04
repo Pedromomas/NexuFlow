@@ -25,7 +25,7 @@ Remove-Item (Join-Path $Root "engine\src\nexuflow_engine.egg-info") -Recurse -Fo
 
 & $Py -m pip install --upgrade pip
 & $Py -m pip install -e ".\engine[dev]"
-& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '1.6.0', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
+& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '2.1.0-beta.1', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
 
 Write-Host "Instalando dependências Angular/Ionic/Tauri..." -ForegroundColor Cyan
 npm install

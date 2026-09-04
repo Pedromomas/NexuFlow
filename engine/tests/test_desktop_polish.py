@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from nexus_engine.state import stop_file
@@ -63,17 +64,53 @@ def test_142_ui_exposes_only_four_plain_language_objectives():
         assert (ROOT / "public" / "game-icons" / f"{game_id}.svg").is_file()
 
 
-def test_142_requests_windows_elevation_once_at_app_launch():
+def test_desktop_stays_unprivileged_until_a_narrow_mutation_needs_uac():
     manifest = (ROOT / "src-tauri" / "app.manifest").read_text(encoding="utf-8")
     build_rs = (ROOT / "src-tauri" / "build.rs").read_text(encoding="utf-8")
     dev_script = (ROOT / "scripts" / "dev.ps1").read_text(encoding="utf-8")
     commands = (ROOT / "src-tauri" / "src" / "commands.rs").read_text(encoding="utf-8")
-    assert 'level="requireAdministrator"' in manifest
+    assert 'level="asInvoker"' in manifest
+    assert 'level="requireAdministrator"' not in manifest
     assert 'include_str!("app.manifest")' in build_rs
-    assert "-Verb RunAs" in dev_script
+    assert "-Verb RunAs" not in dev_script
     start = commands.index("pub async fn start")
     stop = commands.index("pub async fn stop", start)
     assert "privileged_job" in commands[start:stop]
+
+
+def test_unsigned_updater_configuration_cannot_crash_default_startup():
+    cargo = (ROOT / "src-tauri" / "Cargo.toml").read_text(encoding="utf-8")
+    lib = (ROOT / "src-tauri" / "src" / "lib.rs").read_text(encoding="utf-8")
+    assert "default = []" in cargo
+    assert "signed-updater = []" in cargo
+    assert '#[cfg(feature = "signed-updater")]' in lib
+    assert "tauri_plugin_updater::Builder::new().build()" in lib
+
+
+def test_release_updater_uses_the_final_public_key_without_private_material():
+    base = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))
+    release = json.loads(
+        (ROOT / "src-tauri" / "tauri.updater.release.conf.json").read_text(encoding="utf-8")
+    )
+    base_key = base["plugins"]["updater"]["pubkey"]
+    release_key = release["plugins"]["updater"]["pubkey"]
+    assert base_key == release_key
+    assert len(base_key) > 100
+    assert "REPLACE_" not in base_key
+    assert release["bundle"]["createUpdaterArtifacts"] is True
+    assert "createUpdaterArtifacts" not in base["bundle"]
+    serialized = json.dumps({"base": base, "release": release})
+    assert "TAURI_SIGNING_PRIVATE_KEY" not in serialized
+    assert "NexuFlow-Secrets" not in serialized
+
+
+def test_webview_has_a_fail_closed_content_security_policy():
+    config = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))
+    csp = config["app"]["security"]["csp"]
+    assert csp["default-src"] == "'self'"
+    assert csp["connect-src"] == "'self' ipc: http://ipc.localhost"
+    assert csp["object-src"] == "'none'"
+    assert "https:" not in " ".join(str(value) for value in csp.values())
 
 
 def test_cs2_icon_is_identified_and_no_longer_uses_the_lightning_mark():

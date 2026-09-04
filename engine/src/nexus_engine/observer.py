@@ -9,17 +9,18 @@ import psutil
 
 from .catalog import GameCatalog
 from .daemon import daemon_is_running
-from .discovery import discover_games
+from .discovery import discover_games, preferred_running_game
 from .hardware.nvidia import nvidia_telemetry
 from .latency_budget import classify_latency_budget
 from .network.quality import NetworkQualityMonitor, QualityStore, quality_delta
+from .network.connection_center import connection_history
 from .state import StateStore
 
 
 def _snapshot(games: list[dict], gpu: dict, quality: dict) -> dict:
     cpu = psutil.cpu_percent(interval=None)
     mem = psutil.virtual_memory()
-    game = next((item for item in games if item.get("running")), None)
+    game = preferred_running_game(games)
     daemon = daemon_is_running()
     state = StateStore().load()
     session_quality = None
@@ -53,6 +54,7 @@ def _snapshot(games: list[dict], gpu: dict, quality: dict) -> dict:
         "nexus_score": quality.get("nexus_score"),
         "quality_grade": quality.get("grade"),
         "quality_target": quality.get("target"),
+        "connection_history": connection_history(),
         "quality_window_seconds": quality.get("span_seconds"),
         "network_status": "Online" if quality.get("latency_ms") is not None else "Degraded",
         "active_game": game.get("display_name") if game else None,

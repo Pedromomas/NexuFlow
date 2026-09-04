@@ -1,0 +1,81 @@
+<header class="topbar account-topbar">
+  <div><small>PORTAS ABERTAS</small><h1>Conta e assinatura</h1></div>
+  <span class="account-channel" [class.online]="account.configured"><i></i>{{ account.configured ? 'CANAL HTTPS ATIVO' : 'LANÇAMENTO BLOQUEADO' }}</span>
+</header>
+
+<section class="account-hero glass">
+  <div>
+    <span class="eyebrow">CORE GRATUITO PARA SEMPRE</span>
+    <h2>Uma conta simples, sem transformar o NexuFlow em peso.</h2>
+    <p>Login e licença são consultados antes do BOOST e ficam quietos durante partidas protegidas. Senha, cartão e PIX nunca são armazenados no aplicativo.</p>
+  </div>
+  <div class="account-safety"><span>✓ E-mail mínimo</span><span>✓ Sessão curta em memória</span><span>✓ Mercado Pago externo</span><span>✓ Exclusão de conta</span></div>
+</section>
+
+<div class="account-grid" *ngIf="!account.authenticated; else signedIn">
+  <section class="account-form glass">
+    <div class="account-tabs" role="tablist" aria-label="Acesso à conta">
+      <button type="button" role="tab" [class.active]="mode === 'login'" (click)="setMode('login')">Entrar</button>
+      <button type="button" role="tab" [class.active]="mode === 'register'" (click)="setMode('register')">Criar conta</button>
+    </div>
+
+    <div class="account-lock" *ngIf="!account.configured">
+      <b>Cadastro ainda não foi aberto</b>
+      <span>A tela e a segurança estão prontas, mas nenhum dado será coletado até o backend HTTPS, a política de privacidade e o Mercado Pago passarem pelos testes finais.</span>
+    </div>
+
+    <form (ngSubmit)="submit()" novalidate>
+      <label *ngIf="mode === 'register'"><span>Como quer ser chamado</span><input name="displayName" [(ngModel)]="displayName" maxlength="50" autocomplete="name" [disabled]="!account.configured" placeholder="Seu nome"></label>
+      <label><span>E-mail</span><input name="email" [(ngModel)]="email" maxlength="254" autocomplete="email" inputmode="email" [disabled]="!account.configured" placeholder="voce@email.com"></label>
+      <label><span>Senha</span><input name="password" [(ngModel)]="password" type="password" maxlength="128" [autocomplete]="mode === 'register' ? 'new-password' : 'current-password'" [disabled]="!account.configured" placeholder="Mínimo de 10 caracteres"></label>
+      <label class="terms-check" *ngIf="mode === 'register'"><input name="acceptedTerms" type="checkbox" [(ngModel)]="acceptedTerms" [disabled]="!account.configured"><span>Li os <a *ngIf="account.termsUrl" [href]="account.termsUrl" target="_blank" rel="noopener noreferrer">termos</a><ng-container *ngIf="!account.termsUrl">termos</ng-container> e a <a *ngIf="account.privacyPolicyUrl" [href]="account.privacyPolicyUrl" target="_blank" rel="noopener noreferrer">política de privacidade</a><ng-container *ngIf="!account.privacyPolicyUrl">política de privacidade</ng-container>.</span></label>
+      <button class="account-submit" type="submit" [disabled]="!account.configured || account.state === 'busy'">{{ account.state === 'busy' ? 'Aguarde…' : mode === 'register' ? 'Criar conta segura' : 'Entrar' }}</button>
+    </form>
+    <p class="account-message" role="status">{{ account.message }}</p>
+  </section>
+
+  <section class="account-plans glass">
+    <div class="account-section-head"><div><span class="eyebrow">ESCOLHA DEPOIS DO TESTE</span><h2>Planos avançados</h2></div><span>sem cartão no trial</span></div>
+    <div class="account-plan-list">
+      <button type="button" *ngFor="let plan of subscription.plans" [class.selected]="selectedPlan === plan.id" (click)="choosePlan(plan.id)">
+        <span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ plan.priceBrl }}</strong>
+      </button>
+    </div>
+    <div class="plan-boundary"><b>O pagamento só começa depois</b><span>Primeiro a pessoa testa o resultado. O checkout final será aberto no domínio oficial do Mercado Pago.</span></div>
+  </section>
+</div>
+
+<ng-template #signedIn>
+  <div class="account-grid signed-in-grid">
+    <section class="profile-card-live glass">
+      <div class="profile-avatar">{{ account.profile?.displayName?.slice(0, 1)?.toUpperCase() }}</div>
+      <div><span class="eyebrow">PERFIL VERIFICADO</span><h2>{{ account.profile?.displayName }}</h2><p>{{ account.profile?.email }}</p></div>
+      <button type="button" class="ghost" (click)="account.logout()">Sair</button>
+      <div class="profile-facts"><span><small>PLANO</small><b>{{ account.profile?.plan }}</b></span><span><small>STATUS</small><b>{{ account.profile?.subscriptionStatus }}</b></span><span><small>E-MAIL</small><b>{{ account.profile?.emailVerified ? 'Verificado' : 'Pendente' }}</b></span></div>
+    </section>
+    <section class="duo-manager glass">
+      <span class="eyebrow">DUO SEGURO</span><h2>Compartilhe com um amigo, não a senha.</h2><p>O convidado recebe conta própria. Você pode revogar o acesso e a troca respeita uma carência antifraude.</p>
+      <label><span>E-mail do amigo</span><input [(ngModel)]="inviteEmail" inputmode="email" autocomplete="email" placeholder="amigo@email.com"></label>
+      <button type="button" class="account-submit" (click)="invite()" [disabled]="account.state === 'busy'">Enviar convite</button>
+      <small *ngIf="account.profile?.duoInviteEmail as invitedEmail">Convite atual: {{ invitedEmail }}</small>
+    </section>
+    <section class="billing-manager glass">
+      <span class="eyebrow">ASSINATURA</span><h2>Escolha o acesso avançado</h2>
+      <div class="account-plan-list compact">
+        <button type="button" *ngFor="let plan of subscription.plans" [class.selected]="selectedPlan === plan.id" (click)="choosePlan(plan.id)"><span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ plan.priceBrl }}</strong></button>
+      </div>
+      <button type="button" class="account-submit" (click)="checkout()" [disabled]="account.state === 'busy'">Continuar no Mercado Pago</button>
+    </section>
+    <section class="account-danger glass">
+      <div><span class="eyebrow">CONTROLE DOS SEUS DADOS</span><h2>Excluir minha conta</h2><p>A solicitação precisa ser confirmada pelo e-mail verificado. O aplicativo não apaga silenciosamente nem mantém uma sessão escondida.</p></div>
+      <button type="button" (click)="deleteAccount()" [class.armed]="deleteArmed" [disabled]="account.state === 'busy'">{{ deleteArmed ? 'Confirmar solicitação' : 'Solicitar exclusão' }}</button>
+    </section>
+  </div>
+</ng-template>
+
+<section class="account-principles glass">
+  <article><b>Senha</b><span>Hash Argon2id apenas no servidor. Nunca texto puro.</span></article>
+  <article><b>Pagamento</b><span>Cartão e PIX ficam inteiramente no Mercado Pago.</span></article>
+  <article><b>Desempenho</b><span>Validação curta antes ou depois da partida, nunca durante.</span></article>
+  <article><b>LGPD</b><span>Coleta mínima, transparência e caminho de exclusão.</span></article>
+</section>

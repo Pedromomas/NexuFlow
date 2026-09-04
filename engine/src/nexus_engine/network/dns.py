@@ -77,9 +77,9 @@ def _query_latency(server: str, hostname: str, timeout: float = 1.0) -> float | 
     packet = struct.pack("!HHHHHH", tx, 0x0100, 1, 0, 0, 0) + _encode_name(hostname) + struct.pack("!HH", 1, 1)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); sock.settimeout(timeout)
     try:
-        started = time.perf_counter(); sock.sendto(packet, (str(address), 53)); response, _ = sock.recvfrom(4096)
+        started = time.perf_counter(); sock.sendto(packet, (str(address), 53)); response, source = sock.recvfrom(4096)
         elapsed = (time.perf_counter() - started) * 1000
-        if len(response) < 12:
+        if len(response) < 12 or source != (str(address), 53):
             return None
         returned, flags = struct.unpack("!HH", response[:4])
         if returned != tx or not (flags & 0x8000) or (flags & 0xF) != 0:

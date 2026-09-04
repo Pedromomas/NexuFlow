@@ -23,6 +23,9 @@ from nexus_engine.admin import is_admin
 from nexus_engine.anti_cheat import is_protected_game, protected_pid_game, running_protected_games
 from nexus_engine.daemon import daemon_is_running, stop_daemon
 from nexus_engine.hardware.driver_center import open_windows_driver_updates, scan_driver_updates
+from nexus_engine.hardware.pc_center import open_pc_settings
+from nexus_engine.network.connection_center import scan_connection, rank_dns
+from nexus_engine.network.speed_test import run_speed_test
 from nexus_engine.network.quality import NetworkQualityMonitor, QUALITY_TARGETS
 from nexus_engine.orchestrator import NexusOrchestrator
 from nexus_engine.investigator import investigator_snapshot
@@ -180,6 +183,38 @@ def get_gaming_health() -> dict:
 @app.get("/api/v1/drivers/scan")
 def get_driver_scan() -> dict:
     return scan_driver_updates()
+
+
+@app.get("/api/v1/connection/scan")
+def get_connection_scan() -> dict:
+    try:
+        return scan_connection()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/api/v1/connection/dns-ranking")
+def get_dns_ranking() -> dict:
+    try:
+        return rank_dns()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/api/v1/connection/speed-test")
+def get_speed_test() -> dict:
+    try:
+        return run_speed_test()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/pc/settings/{section}", dependencies=[Depends(require_api_token)])
+def post_pc_settings(section: str) -> dict:
+    try:
+        return open_pc_settings(section)
+    except (ValueError, OSError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/api/v1/drivers/open-updates", dependencies=[Depends(require_api_token)])

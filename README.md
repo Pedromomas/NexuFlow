@@ -9,7 +9,9 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão atual: 1.6.0 — Trust Edition**
+**Versão em validação: 2.1.0-beta.1 — Portas Abertas**
+
+Safe Core obrigatório e independente da automação, Central do PC redesenhada, três universos secretos, DNS comparativo ao vivo, speed test limitado e central de atualizações preparada para assinatura. Veja [o marco 2.1 beta](docs/RELEASE_2.1_BETA.md), [a auditoria de segurança](docs/SECURITY_AUDIT_2.1.md) e [as notas da 1.8](docs/RELEASE_1.8.md).
 
 </div>
 
@@ -23,7 +25,7 @@
 | ⚡ **PC** | Saúde de CPU, RAM, GPU, energia e sinais de stutter. |
 | 🛡 **Jogos protegidos** | Políticas fail-closed para Riot, Valve, EAC e BattlEye. |
 | 🚗 **Driver Center** | Consulta sob demanda ao Windows Update; nunca baixa ou instala drivers sozinho. |
-| 🎨 **Visual Edition** | Marca e ícones vetoriais, oito temas públicos, uma arte secreta local e Dashboard com hierarquia clara. |
+| 🎨 **Visual Edition** | Oito temas públicos e três universos secretos locais que transformam toda a interface. |
 | 🔎 **Transparência** | Histórico local, relatórios exportáveis e explicação clara de cada modo. |
 
 ## 🎮 Recursos principais
@@ -54,6 +56,8 @@
 - **Windows:** Windows ICMP API, CPU Sets, `powercfg`, `netsh`, Registry e NT APIs. PowerShell é usado apenas fora de sessões protegidas; durante Riot/Valve/EAC/BattlEye seu lançamento é bloqueado globalmente.
 
 O desktop Tauri é o caminho principal: a UI continua sem privilégio administrativo e o sidecar Python solicita UAC apenas quando uma operação privilegiada é necessária. O aplicativo instalado **não precisa manter VS Code, Node dev server ou FastAPI abertos**.
+
+Para desenvolver com o motor funcionando, use `npm run dev` ou a tarefa do VS Code **NexuFlow: Abrir aplicativo completo**. `npm run ionic:serve` abre somente uma prévia visual no navegador e, por projeto, não possui acesso ao motor desktop.
 
 ## Segurança e rollback
 

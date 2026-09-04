@@ -32,7 +32,7 @@ from .network.policy import SmartRoutePolicy
 from .network.quality import QualityStore, current_quality
 from .network.route_diagnostics import trace_route
 from .network.tcp_tweaks import TcpTweaks
-from .state import StateStore, pending_manual_state
+from .state import StateStore, pending_manual_state, stop_file
 
 
 class NexusOrchestrator:
@@ -120,8 +120,12 @@ class NexusOrchestrator:
         quality_before = self.quality_store.snapshot(30.0)
         baseline_deadline = time.time() + 20.0
         while not quality_before.get("complete_window") and time.time() < baseline_deadline:
+            if stop_file().exists():
+                raise RuntimeError("Preparação cancelada antes de qualquer alteração.")
             time.sleep(1.0)
             quality_before = self.quality_store.snapshot(30.0)
+        if stop_file().exists():
+            raise RuntimeError("Preparação cancelada antes de qualquer alteração.")
         if quality_before.get("sample_count", 0) == 0:
             quality_before = current_quality(window_seconds=30.0)
 

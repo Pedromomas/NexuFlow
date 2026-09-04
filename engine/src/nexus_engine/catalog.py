@@ -43,6 +43,9 @@ class GameCatalog:
                 process_names=tuple(item.get("process_names", [])),
                 install_hints=tuple(item.get("install_hints", [])),
                 pools=tuple(pools),
+                steam_paths=tuple(item.get("steam_paths", [])),
+                protection=str(item.get("protection", "Conservador")),
+                catalog_source=item.get("catalog_source"),
             )
         return cls(games)
 

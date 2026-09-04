@@ -1,0 +1,59 @@
+<header class="topbar"><div><small>NEXUFLOW 2.1 • PORTAS ABERTAS</small><h1>{{ mode === 'connection' ? 'Central de Conexão' : 'Central do PC' }}</h1></div><span class="confidence-chip">SAFE CORE OBRIGATÓRIO</span></header>
+<p class="center-notice" role="status" aria-live="polite" *ngIf="notice">{{ notice }}</p>
+<ng-container *ngIf="mode === 'connection'">
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">MONITORAMENTO • ATÉ 2 MINUTOS</span><h2>{{ live ? 'Sua conexão, ao vivo' : 'Aguardando amostras recentes' }}</h2></div><span class="confidence-chip">{{ monitor?.target || 'SEM REFERÊNCIA' }}</span></div>
+    <p>Latência até uma referência de internet, não até o jogo. Lacunas são respostas ausentes; mudança de alvo reinicia o gráfico.</p>
+    <div class="center-metrics">
+      <div><small>MEDIANA</small><b>{{ live ? (monitor?.summary?.latency_ms ?? '—') : '—' }} <em>ms</em></b></div>
+      <div><small>JITTER</small><b>{{ live ? (monitor?.summary?.jitter_ms ?? '—') : '—' }} <em>ms</em></b></div>
+      <div><small>SEM RESPOSTA</small><b>{{ live ? (monitor?.summary?.packet_loss_percent ?? '—') : '—' }} <em>%</em></b></div>
+      <div><small>P95 / PICOS</small><b>{{ live ? (monitor?.summary?.p95_ms ?? '—') : '—' }} <em>ms / {{ live ? (monitor?.summary?.spikes ?? 0) : '—' }}</em></b></div>
+    </div>
+    <div class="center-chart" *ngIf="live; else waiting">
+      <div class="chart-caption"><span>0 – {{ graphMax | number:'1.0-1' }} ms</span><span>{{ monitor?.summary?.sample_count }} amostras • {{ monitor?.summary?.span_seconds }} s</span></div>
+      <svg viewBox="0 0 800 190" role="img" aria-label="Histórico de latência; marcas vermelhas indicam consultas sem resposta" preserveAspectRatio="none"><path class="chart-grid" d="M10 25H790M10 98H790M10 170H790"/><path *ngFor="let path of graphPaths" class="chart-line" [attr.d]="path"/><line *ngFor="let x of timeouts" class="chart-loss" [attr.x1]="x" [attr.x2]="x" y1="176" y2="188"/></svg>
+      <small>Pico = acima de 50 ms e de 2× a mediana. P95 = limite que abrange 95% das respostas. Amostra curta não é diagnóstico definitivo.</small>
+    </div>
+    <ng-template #waiting><div class="empty-state"><b>{{ telemetry?.engine_online ? 'O monitor ainda não reuniu dados recentes.' : 'Mecanismo offline' }}</b><span>Abra o aplicativo desktop. Dados antigos nunca aparecem como conexão saudável.</span></div></ng-template>
+  </section>
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">SCANNER DE CONEXÃO</span><h2>Compare antes de mexer</h2></div><button class="ghost" (click)="run('scan')" [disabled]="nexus.centerBusy || !telemetry?.engine_online">{{ nexus.centerBusy ? 'Medindo…' : 'Executar scanner' }}</button></div>
+    <p>Três destinos fixos, até 36 consultas. Sem mudar DNS, rotas, adaptadores ou arquivos do jogo.</p>
+    <ng-container *ngIf="scan as result">
+      <p class="center-verdict">{{ result.conclusion }}</p>
+      <div class="center-reference-grid"><article *ngFor="let row of result.results"><small>{{ row.name }} • {{ row.target }}</small><h3>{{ row.latency_ms ?? '—' }} <em>ms</em></h3><p>Jitter {{ row.jitter_ms ?? '—' }} ms • sem resposta {{ row.packet_loss_percent ?? '—' }}%</p><span>{{ compare(row.target) }}</span></article></div>
+      <small>{{ result.method }}</small>
+    </ng-container>
+    <div class="center-actions"><button class="ghost" (click)="exportReport()" [disabled]="!scan && !nexus.dnsRanking">Exportar relatório</button><button class="ghost" (click)="openSettings('network')">Abrir ajustes de rede</button></div>
+    <details class="center-history" *ngIf="nexus.connectionScans.length"><summary>Histórico local • últimos {{ nexus.connectionScans.length }} scans</summary><button class="ghost" *ngFor="let item of nexus.connectionScans; let i = index" (click)="selectedScan = i" [attr.aria-pressed]="selectedScan === i">{{ item.measured_at * 1000 | date:'dd/MM HH:mm:ss' }}{{ selectedScan === i ? ' • selecionado' : '' }}</button></details>
+  </section>
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">DNS AO VIVO • SOMENTE LEITURA</span><h2>Veja qual resolve melhor agora</h2></div><div class="center-actions"><button class="ghost" (click)="run('dns')" [disabled]="nexus.centerBusy || dnsLive || !telemetry?.engine_online">Medição única</button><button class="ghost live-action" [class.active]="dnsLive" (click)="toggleDnsLive()" [disabled]="(!dnsLive && nexus.centerBusy) || !telemetry?.engine_online">{{ dnsLive ? 'Parar comparação' : 'Comparar por 60 s' }}</button></div></div>
+    <p>O DNS encontra endereços. Ser mais rápido neste teste não significa diminuir o ping durante uma partida.</p>
+    <ng-container *ngIf="nexus.dnsRanking as dns">
+      <p class="center-verdict">{{ dns.recommendation ? 'Melhor pontuação elegível nesta medição: ' + dns.recommendation : 'Nenhum provedor com respostas suficientes para recomendar.' }} • {{ dns.measured_at * 1000 | date:'HH:mm:ss' }}</p>
+      <div class="center-dns-row" *ngFor="let row of dns.results; let i = index"><b>{{ i + 1 }}. {{ row.provider }}</b><span>{{ row.servers.join(' / ') }}</span><strong>{{ row.median_ms ?? '—' }} ms</strong><small>{{ row.successful }}/{{ row.samples }} respostas{{ row.eligible ? '' : ' • inconclusivo' }}</small></div>
+      <div class="dns-live-grid" *ngIf="dnsLiveSamples.length"><article *ngFor="let row of dns.results"><div><b>{{ row.provider }}</b><small>{{ dnsLiveSamples.length }} rodadas locais</small></div><svg viewBox="0 0 200 52" preserveAspectRatio="none"><path d="M5 46H195" class="chart-grid"/><path [attr.d]="dnsSpark(row.provider)" class="chart-line"/></svg></article></div>
+      <p>{{ dns.note }}</p><small>{{ dns.method }}</small>
+    </ng-container>
+  </section>
+  <section class="panel glass center-panel speed-panel">
+    <div class="section-title"><div><span class="eyebrow">TESTE RÁPIDO • SOB DEMANDA</span><h2>Download e upload aproximados</h2></div><button class="ghost speed-action" (click)="runSpeed()" [disabled]="speedBusy || boosted || !telemetry?.engine_online">{{ speedBusy ? 'Medindo…' : 'Iniciar teste' }}</button></div>
+    <p>Transfere no máximo 30 MiB para um edge da Cloudflare. O servidor vê seu IP público, como em qualquer conexão. O NexuFlow não envia o resultado.</p>
+    <div class="speed-dials" *ngIf="speedTest as speed; else speedEmpty"><article><span>DOWNLOAD</span><b>{{ speed.download_mbps | number:'1.1-1' }}</b><small>Mbps</small></article><article><span>UPLOAD</span><b>{{ speed.upload_mbps | number:'1.1-1' }}</b><small>Mbps</small></article><div><small>MEDIDO ÀS {{ speed.measured_at * 1000 | date:'HH:mm:ss' }}</small><p>{{ speed.note }}</p></div></div>
+    <ng-template #speedEmpty><div class="speed-ready"><i></i><div><b>{{ boosted ? 'Desative o BOOST para testar sem disputar banda.' : 'Pronto quando você estiver.' }}</b><span>O teste nunca começa sozinho e não roda durante partidas protegidas.</span></div></div></ng-template>
+  </section>
+</ng-container>
+<ng-container *ngIf="mode === 'pc'">
+  <section class="panel glass center-panel pc-live-panel" [class.active]="boosted">
+    <div class="pc-safe-core"><span class="pc-shield" aria-hidden="true">✓</span><div><small>PROTEÇÃO INDEPENDENTE DO BOTÃO</small><b>Vanguard, VAC, EAC e BattlEye Safe não podem ser desligados.</b><p>Com a automação ligada ou em espera, qualquer ação do NexuFlow passa primeiro pela política obrigatória. Desligado significa “nenhuma otimização ativa”, não “proteção desativada”.</p></div><strong>SEMPRE ATIVO</strong></div>
+    <div class="pc-live-hero"><div><span class="eyebrow">AUTOMAÇÃO REVERSÍVEL</span><h2>{{ boosted ? 'Sessão otimizada e monitorada.' : 'O motor está em espera.' }}</h2><p>{{ boosted ? 'O NexuFlow detecta o jogo, aplica somente o permitido e restaura tudo quando você encerrar.' : 'Ative para preparar o PC automaticamente. A primeira mudança real pede uma confirmação segura do Windows; desligar usa o mesmo motor para restaurar sem repetir o aviso.' }}</p></div><button class="pc-flow-console" [class.active]="boosted" [class.busy]="boostBusy" [disabled]="boostBusy || !telemetry?.engine_online" (click)="toggleSmart.emit()" [attr.aria-label]="boosted ? 'Encerrar automação e restaurar' : 'Ativar automação segura'"><span class="pc-flow-status"><i></i>{{ boostBusy ? 'SINCRONIZANDO' : boosted ? 'FLUXO ATIVO' : 'PRONTO PARA ATIVAR' }}</span><b>{{ boostBusy ? 'Aguarde' : boosted ? 'Restaurar e encerrar' : 'Iniciar automação segura' }}</b><small>{{ telemetry?.engine_online ? 'snapshot local • rollback automático' : 'motor indisponível' }}</small><em aria-hidden="true">{{ boosted ? '■' : '▶' }}</em></button></div>
+    <div class="pc-automation-strip"><div><i>1</i><b>Detecta</b><span>jogo e proteção</span></div><div><i>2</i><b>Prepara</b><span>somente o permitido</span></div><div><i>3</i><b>Acompanha</b><span>rede e hardware</span></div><div><i>4</i><b>Restaura</b><span>ao desligar</span></div></div>
+  </section>
+  <section class="panel glass center-panel pc-health-panel">
+    <div class="section-title"><div><span class="eyebrow">LEITURAS AUTOMÁTICAS</span><h2>O essencial, sem menus técnicos</h2></div><button class="ghost" (click)="refresh.emit()">Atualizar agora</button></div>
+    <div class="center-pc-grid"><article *ngFor="let card of pcCards" [class.needs-attention]="card.attention"><small>{{ card.attention ? 'PRECISA DE ATENÇÃO' : 'ACOMPANHAMENTO SEGURO' }}</small><h3>{{ card.title }}</h3><b>{{ card.status }}</b><p>{{ card.description }}</p></article></div>
+    <p class="center-verdict">Sem limpeza automática de armazenamento, controle genérico de ventoinha, encerramento de programas ou desativação silenciosa da Game Bar.</p>
+  </section>
+</ng-container>

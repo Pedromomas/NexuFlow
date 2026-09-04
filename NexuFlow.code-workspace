@@ -6,10 +6,50 @@
     "files.exclude": {
       "**/__pycache__": true,
       "**/.pytest_cache": true,
+      "**/.test-deps": true,
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/release": true,
+      ".audit-*": true,
+      ".engine-*-smoke*.json": true,
+      "engine/.build-*": true,
+      "engine/.dist-*": true,
       "engine/.venv": true,
       "src-tauri/target": true
     },
-    "python.defaultInterpreterPath": "${workspaceFolder}\\engine\\.venv\\Scripts\\python.exe"
+    "files.watcherExclude": {
+      "**/.test-deps/**": true,
+      "**/node_modules/**": true,
+      "**/dist/**": true,
+      "**/release/**": true,
+      "**/.audit-*/**": true,
+      "**/engine/.venv/**": true,
+      "**/engine/.build-*/**": true,
+      "**/engine/.dist-*/**": true,
+      "**/src-tauri/target/**": true
+    },
+    "search.exclude": {
+      "**/.test-deps/**": true,
+      "**/node_modules/**": true,
+      "**/dist/**": true,
+      "**/release/**": true,
+      "**/.audit-*/**": true,
+      "**/engine/.venv/**": true,
+      "**/engine/.build-*/**": true,
+      "**/engine/.dist-*/**": true,
+      "**/src-tauri/target/**": true
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder}\\engine\\.venv\\Scripts\\python.exe",
+    "python.analysis.exclude": [
+      "**/.test-deps/**",
+      "**/node_modules/**",
+      "**/engine/.build-*/**",
+      "**/engine/.dist-*/**",
+      "**/src-tauri/target/**"
+    ],
+    "rust-analyzer.linkedProjects": ["${workspaceFolder}\\src-tauri\\Cargo.toml"],
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.tsserver.maxTsServerMemory": 2048
   },
   "extensions": {
     "recommendations": [

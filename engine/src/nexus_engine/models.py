@@ -45,6 +45,9 @@ class GameDefinition:
     process_names: tuple[str, ...]
     install_hints: tuple[str, ...]
     pools: tuple[EndpointPool, ...]
+    steam_paths: tuple[str, ...] = ()
+    protection: str = "Conservador"
+    catalog_source: str | None = None
 
 
 @dataclass(slots=True)

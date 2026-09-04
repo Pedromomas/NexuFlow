@@ -9,6 +9,8 @@ src-tauri/target/
 engine/.venv/
 engine/build/
 engine/dist/
+engine/build-v17/
+engine/dist-v17/
 engine/.pytest-*/
 engine/src/*.egg-info/
 release/
@@ -21,5 +23,14 @@ __pycache__/
 *.pyc
 src-tauri/binaries/nexus-engine-*.exe
 *.log
+src-tauri/tauri.updater.conf.json
+*.key
+*.key.enc
+.audit-*/
+.engine-*-smoke*.json
+.engine-smoke-*.json
+engine/.build-*/
+engine/.dist-*/
+out-tsc/
 
 .pytest-tmp/

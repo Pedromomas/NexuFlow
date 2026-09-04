@@ -1,0 +1,16 @@
+{
+  "bundle": {
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFOTEyNjlEQzYyNjUxNTEKUldSUlVTYkduU2FSYmk0Nkx1WnJHVVd0RHBZTXNjQUpTaHJ3MlN5UlVUUzNzdjFtT1BMTmUweUgK",
+      "endpoints": [
+        "https://github.com/Pedromomas/NexuFlow/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

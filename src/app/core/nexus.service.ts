@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import {
   AntiCheatStatus,
+  ConnectionScan,
+  DnsRanking,
   BoostProfile,
   DriverScanReport,
   EngineResponse,
@@ -12,13 +14,39 @@ import {
   RouteDiagnostics,
   SessionRecord,
   Telemetry,
-  SignedReportEnvelope
+  SignedReportEnvelope,
+  SpeedTestResult
 } from './models';
 
 type JsonObject = Record<string, unknown>;
 
 @Injectable({ providedIn: 'root' })
 export class NexusService {
+  connectionScans: ConnectionScan[] = [];
+  dnsRanking: DnsRanking | null = null;
+  centerBusy = false;
+
+  async scanConnection(): Promise<ConnectionScan> {
+    return this.isDesktop() ? invoke<ConnectionScan>('scan_connection') : this.api<ConnectionScan>('/connection/scan');
+  }
+
+  async rankDns(): Promise<DnsRanking> {
+    return this.isDesktop() ? invoke<DnsRanking>('rank_dns') : this.api<DnsRanking>('/connection/dns-ranking');
+  }
+
+  async runSpeedTest(): Promise<SpeedTestResult> {
+    return this.isDesktop() ? invoke<SpeedTestResult>('run_speed_test') : this.api<SpeedTestResult>('/connection/speed-test');
+  }
+
+  async openPcSettings(section: string): Promise<void> {
+    const allowed = ['game_mode', 'captures', 'graphics', 'startup', 'storage', 'power', 'network'];
+    if (!allowed.includes(section)) throw new Error('Destino de ajustes não permitido');
+    if (this.isDesktop()) await invoke('open_pc_settings', { section });
+    else await this.api(`/pc/settings/${section}`, { method: 'POST' }, true);
+  }
+  async setArtworkFullscreen(enabled: boolean): Promise<boolean> {
+    return invoke<boolean>('set_artwork_fullscreen', { enabled });
+  }
   private readonly apiBase = 'http://127.0.0.1:8000/api/v1';
   private readonly allowedApiOrigin = 'http://127.0.0.1:8000';
   private readonly tokenKey = 'nexuflow_api_token';
@@ -123,7 +151,7 @@ export class NexusService {
         packet_loss_percent: null,
         nexus_score: 0,
         quality_grade: 'Offline',
-        network_status: 'Engine Offline',
+        network_status: this.isDesktop() ? 'Motor indisponivel' : 'Previa sem motor — execute npm run dev',
         active_game: null,
         gpu_name: null,
         gpu_utilization: null,

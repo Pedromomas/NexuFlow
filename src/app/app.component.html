@@ -1,5 +1,5 @@
 <ion-app>
-<main class="shell" [class.boosted]="boosted">
+<main class="shell" [class.boosted]="boosted" [class.wallpaper-mode]="wallpaperMode">
   <svg class="svg-sprite" aria-hidden="true">
     <symbol id="icon-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></symbol>
     <symbol id="icon-gamepad" viewBox="0 0 24 24"><path d="M8.4 7h7.2a5 5 0 0 1 4.8 3.6l1.1 3.8a3.4 3.4 0 0 1-5.8 3.2L14 16h-4l-1.7 1.6a3.4 3.4 0 0 1-5.8-3.2l1.1-3.8A5 5 0 0 1 8.4 7Z"></path><path d="M7 10v4M5 12h4"></path><circle cx="16.5" cy="11" r=".8" fill="currentColor" stroke="none"></circle><circle cx="18.5" cy="13" r=".8" fill="currentColor" stroke="none"></circle></symbol>
@@ -18,14 +18,33 @@
     <symbol id="icon-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"></path></symbol>
     <symbol id="icon-key" viewBox="0 0 24 24"><circle cx="8.5" cy="15.5" r="4.5"></circle><path d="m12 12 8-8m-3 3 3 3m-6 0 2 2"></path></symbol>
     <symbol id="icon-secret" viewBox="0 0 24 24"><path d="m12 2 2.2 6.2L21 10l-5.2 4.1.2 6.9-4-2.4L8 21l.2-6.9L3 10l6.8-1.8L12 2Z"></path><path d="m10 10 2-1.5L14 10l-2 4-2-4Z"></path></symbol>
+    <symbol id="icon-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></symbol>
   </svg>
   <a class="skip-link" href="#app-content">Pular para o conteúdo</a>
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
   <div class="noise"></div>
   <div class="theme-pattern" aria-hidden="true"></div>
-  <img class="secret-cover" *ngIf="uiTheme === 'secret'" src="theme-art/secret/nexuflow-secret-cover.jpg" alt="" aria-hidden="true">
-  <img class="theme-mascot" [src]="uiTheme === 'secret' ? 'theme-art/secret/nexuflow-secret-mascot.png' : 'theme-art/flux-mascot.png'" alt="" aria-hidden="true">
+  <img class="secret-cover" *ngIf="isSecretTheme" [src]="themeArtwork" alt="" aria-hidden="true">
+  <img class="theme-mascot" *ngIf="!isSecretTheme" src="theme-art/flux-mascot.png" alt="" aria-hidden="true" width="720" height="1003" decoding="async" fetchpriority="low">
+  <img *ngIf="wallpaperMode" class="wallpaper-art" [src]="wallpaperArtwork" [alt]="isSecretTheme ? themeStory.alt : 'Flux, mascote do NexuFlow'">
+  <button *ngIf="wallpaperMode" id="wallpaper-exit" type="button" class="wallpaper-exit" (click)="exitWallpaperMode()" [disabled]="wallpaperBusy" aria-label="Voltar à interface">Voltar <span>Esc</span></button>
+
+  <div *ngIf="unlockCelebration" class="unlock-celebration" [class.reduce-motion]="reducedMotion" [ngClass]="unlockReward.animationClass" role="dialog" aria-modal="true" aria-labelledby="unlock-title">
+    <div class="unlock-art" [style.background-image]="'linear-gradient(rgba(3,7,19,.28),rgba(3,7,19,.78)),url(' + unlockReward.artwork + ')'" aria-hidden="true"></div>
+    <div class="unlock-burst" aria-hidden="true"></div>
+    <div class="unlock-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <section class="unlock-reward-card">
+      <div class="unlock-emblem"><svg viewBox="0 0 24 24"><use href="#icon-secret"></use></svg></div>
+      <span>{{ unlockReward.eyebrow }}</span>
+      <h2 id="unlock-title">{{ unlockReward.title }}</h2>
+      <p>{{ unlockReward.message }}</p>
+      <button id="unlock-continue" type="button" (click)="dismissUnlockCelebration()">Ver recompensa <b>→</b></button>
+      <button class="unlock-audio-control" type="button" *ngIf="secretAudioState === 'playing'" (click)="stopSecretAudio()">Silenciar som</button>
+      <button class="unlock-audio-control" type="button" *ngIf="secretAudioState === 'blocked'" (click)="playSecretUnlockAudio()">Tocar som do desbloqueio</button>
+      <small>Pressione Esc para continuar</small>
+    </section>
+  </div>
 
   <div class="hotbar glass" aria-label="Barra rápida de navegação">
     <button type="button" (click)="scrollToTop()" aria-label="Ir para o topo" title="Topo">↑</button>
@@ -44,6 +63,7 @@
     </div>
     <div class="font-quick"><span>Texto {{ fontScale }}%</span><div><button type="button" (click)="bumpFont(-5)" aria-label="Diminuir texto">A−</button><button type="button" (click)="bumpFont(5)" aria-label="Aumentar texto">A+</button></div></div>
     <button type="button" class="motion-toggle" [class.active]="reducedMotion" (click)="toggleReducedMotion()"><span>{{ reducedMotion ? 'Movimento reduzido' : 'Animações suaves' }}</span><i></i></button>
+    <button type="button" class="wallpaper-shortcut" (click)="enterWallpaperMode()"><span aria-hidden="true">⛶</span><div><b>Ver papel de parede</b><small>Tela cheia, sem menus · Esc para voltar</small></div></button>
   </section>
 
   <div class="learn-overlay" *ngIf="learnMoreContent as info" (click)="closeLearnMore()">
@@ -62,44 +82,55 @@
     </section>
   </div>
 
+  <section class="update-banner glass" *ngIf="updates.visible" [class.security-required]="updates.requiresSecurityUpdate" role="status" aria-live="assertive">
+    <div><span class="eyebrow">{{ updates.requiresSecurityUpdate ? 'CORREÇÃO CRÍTICA ASSINADA' : 'ATUALIZAÇÃO ASSINADA' }}</span><b>NexuFlow {{ updates.version }} {{ updates.requiresSecurityUpdate ? 'é obrigatório' : 'está disponível' }}</b><small>{{ updates.displayNotes || 'Nova versão validada pela assinatura do projeto.' }}</small></div>
+    <div><button *ngIf="!updates.requiresSecurityUpdate" class="ghost" (click)="updates.dismiss()">Agora não</button><button class="update-apply" (click)="installUpdate()" [disabled]="updates.state === 'downloading' || updates.state === 'ready' || protectedGameActive || boosted">{{ updates.state === 'downloading' ? 'Validando e baixando ' + updates.progress + '%' : updates.state === 'ready' ? 'Instalada — reiniciando' : protectedGameActive || boosted ? 'Aguardando sessão segura' : updates.requiresSecurityUpdate ? 'Instalar correção' : 'Atualizar' }}</button></div>
+  </section>
+
   <aside class="sidebar glass">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <span *ngIf="uiTheme === 'secret'" class="secret-brand-crop"><img class="secret-brand-image" src="theme-art/secret/nexuflow-secret-icon.jpg" alt=""></span>
-        <svg *ngIf="uiTheme !== 'secret'" class="brand-core" viewBox="0 0 48 48"><path class="brand-frame" d="M14 7h20l7 7v20l-7 7H14l-7-7V14l7-7Z"></path><path class="brand-flow" d="M15 33V16l18 17V16"></path><path class="brand-pulse" d="m20 24 4-5 4 10 4-5"></path><circle cx="15" cy="16" r="2"></circle><circle cx="33" cy="33" r="2"></circle></svg>
+        <span *ngIf="isSecretTheme" class="secret-brand-crop"><img class="secret-brand-image" [src]="themeArtwork" alt=""></span>
+        <svg *ngIf="!isSecretTheme" class="brand-core" viewBox="0 0 48 48"><path class="brand-frame" d="M14 7h20l7 7v20l-7 7H14l-7-7V14l7-7Z"></path><path class="brand-flow" d="M15 33V16l18 17V16"></path><path class="brand-pulse" d="m20 24 4-5 4 10 4-5"></path><circle cx="15" cy="16" r="2"></circle><circle cx="33" cy="33" r="2"></circle></svg>
         <svg class="brand-signature" viewBox="0 0 24 24"><use [attr.href]="'#' + themeSignatureIcon"></use></svg>
       </span>
       <div class="brand-word"><strong>NEXU<span>FLOW</span></strong><small>SAFE PERFORMANCE</small></div>
     </div>
 
     <nav aria-label="Navegação principal">
-      <button [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span class="nav-label">Dashboard</span></button>
-      <button [class.active]="tab === 'games'" (click)="setTab('games')"><svg class="nav-icon"><use [attr.href]="'#' + gamesNavigationIcon"></use></svg><span class="nav-label">Jogos</span></button>
-      <button [class.active]="tab === 'history'" (click)="setTab('history')"><svg class="nav-icon"><use href="#icon-history"></use></svg><span class="nav-label">Histórico</span></button>
-      <button [class.active]="tab === 'investigator'" (click)="setTab('investigator')"><svg class="nav-icon"><use href="#icon-investigator"></use></svg><span class="nav-label">Investigador</span></button>
-      <button [class.active]="tab === 'appearance'" (click)="setTab('appearance')"><svg class="nav-icon"><use href="#icon-palette"></use></svg><span class="nav-label">Aparência</span></button>
-      <button [class.active]="tab === 'settings'" (click)="setTab('settings')"><svg class="nav-icon"><use href="#icon-sliders"></use></svg><span class="nav-label">Ajustes</span></button>
-      <button class="redeem-nav" [class.active]="tab === 'redeem'" [class.unlocked]="secretUnlocked" (click)="setTab('redeem')"><svg class="nav-icon"><use href="#icon-key"></use></svg><span class="nav-label">Código secreto</span><i *ngIf="secretUnlocked" aria-label="Desbloqueado"></i></button>
+      <button aria-label="Dashboard" title="Dashboard" [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span class="nav-label">Dashboard</span></button>
+      <button aria-label="Jogos" title="Jogos" [class.active]="tab === 'games'" (click)="setTab('games')"><svg class="nav-icon"><use [attr.href]="'#' + gamesNavigationIcon"></use></svg><span class="nav-label">Jogos</span></button>
+      <button aria-label="Conexão" title="Conexão" [class.active]="tab === 'connection'" (click)="setTab('connection')"><svg class="nav-icon"><use href="#icon-investigator"></use></svg><span class="nav-label">Conexão</span></button>
+      <button aria-label="Central do PC" title="Central do PC" [class.active]="tab === 'pc'" (click)="setTab('pc')"><svg class="nav-icon"><use href="#icon-lightning"></use></svg><span class="nav-label">Central do PC</span></button>
+      <button aria-label="Histórico" title="Histórico" [class.active]="tab === 'history'" (click)="setTab('history')"><svg class="nav-icon"><use href="#icon-history"></use></svg><span class="nav-label">Histórico</span></button>
+      <button aria-label="Investigador" title="Investigador" [class.active]="tab === 'investigator'" (click)="setTab('investigator')"><svg class="nav-icon"><use href="#icon-investigator"></use></svg><span class="nav-label">Investigador</span></button>
+      <button aria-label="Aparência" title="Aparência" [class.active]="tab === 'appearance'" (click)="setTab('appearance')"><svg class="nav-icon"><use href="#icon-palette"></use></svg><span class="nav-label">Aparência</span></button>
+      <button aria-label="Ajustes" title="Ajustes" [class.active]="tab === 'settings'" (click)="setTab('settings')"><svg class="nav-icon"><use href="#icon-sliders"></use></svg><span class="nav-label">Ajustes</span></button>
+      <button aria-label="Conta e assinatura" title="Conta e assinatura" [class.active]="tab === 'account'" (click)="setTab('account')"><svg class="nav-icon"><use href="#icon-account"></use></svg><span class="nav-label">Conta</span></button>
+      <button aria-label="Código secreto" title="Código secreto" class="redeem-nav" [class.active]="tab === 'redeem'" [class.unlocked]="secretUnlocked" (click)="setTab('redeem')"><svg class="nav-icon"><use href="#icon-key"></use></svg><span class="nav-label">Código secreto</span><i *ngIf="secretUnlocked" aria-label="Desbloqueado"></i></button>
     </nav>
 
     <div class="sidebar-foot">
+      <button type="button" class="global-update-status" [class.available]="updates.visible" [class.critical]="updates.securityUpdateBlocking" (click)="setTab('settings')" [attr.aria-label]="updates.statusLabel">
+        <span>↻</span><div><b>{{ updates.visible ? 'ATUALIZAÇÃO ' + updates.version : updates.configured ? 'CANAL ASSINADO' : 'CANAL EM PREPARAÇÃO' }}</b><small>{{ updates.statusLabel }}</small></div>
+      </button>
       <span class="status-dot" [class.on]="telemetry?.engine_online"></span>
-      <div><b>{{ boosted ? 'NexuFlow ativo' : telemetry?.engine_online ? 'Em espera' : 'Engine offline' }}</b><small>{{ telemetry?.network_status || 'Inicializando' }}</small></div>
+      <div><b>{{ boosted ? 'NexuFlow ativo' : telemetry?.engine_online ? 'Em espera' : desktopMode ? 'Motor indisponivel' : 'Previa no navegador' }}</b><small>{{ telemetry?.network_status || 'Inicializando' }}</small></div>
     </div>
   </aside>
 
   <section id="app-content" class="content page-enter" *ngIf="tab === 'dashboard'">
     <header class="topbar">
       <div><small>CONTROLE CENTRAL</small><h1>Dashboard</h1></div>
-      <div class="live-pill" [class.offline]="telemetry && !telemetry.engine_online"><i></i> {{ telemetry?.engine_online ? 'LIVE' : 'ENGINE OFFLINE' }}</div>
+      <div class="live-pill" [class.offline]="telemetry && !telemetry.engine_online"><i></i> {{ telemetry?.engine_online ? 'LIVE' : desktopMode ? 'MOTOR OFFLINE' : 'MODO WEB' }}</div>
     </header>
 
     <section class="focus-dashboard glass">
       <div class="boost-control">
-        <button class="boost-orb" [class.engaged]="boosted" [class.busy]="busy" (click)="toggleBoost()" [disabled]="busy || !telemetry?.engine_online" [attr.aria-label]="boosted ? 'Desativar NexuFlow Boost' : 'Ativar NexuFlow Boost'">
+        <button class="boost-orb" [class.engaged]="boosted" [class.starting]="boostIntent === 'starting'" [class.stopping]="boostIntent === 'stopping'" [class.busy]="busy" (click)="toggleBoost()" [disabled]="busy || !telemetry?.engine_online" [attr.aria-label]="boosted ? 'Desativar NexuFlow Boost' : 'Ativar NexuFlow Boost'">
           <svg class="boost-bolt" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-lightning"></use></svg>
-          <strong>{{ busy ? 'AGUARDE' : boosted ? 'ATIVO' : 'BOOST' }}</strong>
-          <small>{{ boosted ? 'clique para restaurar' : 'clique para otimizar' }}</small>
+          <strong>{{ boostIntent === 'starting' ? 'LIGANDO' : boostIntent === 'stopping' ? 'RESTAURANDO' : boosted ? 'ATIVO' : 'BOOST' }}</strong>
+          <small>{{ boostIntent === 'starting' ? 'checando proteção e baseline' : boostIntent === 'stopping' ? 'desfazendo ajustes com segurança' : boosted ? 'clique para restaurar' : 'clique para otimizar' }}</small>
         </button>
       </div>
 
@@ -170,21 +201,25 @@
     </section>
   </section>
 
+  <app-performance-center id="app-content" class="content page-enter" *ngIf="tab === 'connection' || tab === 'pc'" [mode]="tab === 'connection' ? 'connection' : 'pc'" [telemetry]="telemetry" [health]="gamingHealth" [boosted]="boosted" [boostBusy]="busy" (refresh)="refreshHealth()" (preparePc)="preparePc()" (toggleSmart)="toggleSmartFlow()"></app-performance-center>
+
   <section id="app-content" class="content page-enter" *ngIf="tab === 'games'">
     <header class="topbar"><div><small>DETECÇÃO AUTOMÁTICA</small><h1>Jogos</h1></div></header>
     <section class="panel glass">
-      <div class="section-title"><div><span class="eyebrow">ZERO-CONFIG • {{ validatedGamesCount }} JOGOS VALIDADOS</span><h2>Jogos monitorados</h2><p class="section-subtitle">Encontrados neste PC: {{ installedGamesCount }} • em execução agora: {{ runningGamesCount }}. A lista mostra compatibilidade, não uma biblioteca completa da sua conta.</p></div><button class="ghost" (click)="refreshGames()">Atualizar</button></div>
+      <div class="section-title"><div><span class="eyebrow">CATÁLOGO 1.8 • {{ validatedGamesCount }} JOGOS</span><h2>Jogos monitorados</h2><p class="section-subtitle">Encontrados neste PC: {{ installedGamesCount }} • em execução agora: {{ runningGamesCount }}. Detecção por nome do processo e caminhos conhecidos, incluindo bibliotecas Steam.</p></div><button class="ghost" (click)="refreshGames()">Atualizar</button></div>
+      <div class="center-actions game-filters"><input aria-label="Buscar jogo" [(ngModel)]="gameQuery" placeholder="Buscar no catálogo…" maxlength="80"><select aria-label="Filtrar jogos" [(ngModel)]="gameFilter"><option value="all">Todos os jogos</option><option value="installed">Encontrados neste PC</option><option value="favorites">Favoritos</option></select></div>
       <div class="retest-seal"><i>✓</i><div><b>Revisão documental verificada em 01/09/2026</b><span>Riot/Vanguard, Valve/VAC, EAC e BattlEye • teste real após novos patches continua obrigatório; isto não é certificação das fabricantes.</span></div></div>
       <div class="game-list">
-        <article class="game-row" *ngFor="let game of games" [class.muted]="!game.installed">
+        <article class="game-row" *ngFor="let game of filteredGames; trackBy: trackGameId" [class.muted]="!game.installed">
           <div class="game-icon"><img [src]="gameIcon(game.id)" [alt]="'Ícone de ' + game.display_name"></div>
-          <div class="game-info"><b>{{ game.display_name }}</b><span>{{ game.running ? 'Em execução • ' + effectiveProfileLabel : game.installed ? 'Instalado • pronto para detectar' : 'Compatível • não encontrado neste PC' }}</span></div>
+          <div class="game-info"><b>{{ game.display_name }}</b><span>{{ game.running ? 'Em execução' : game.installed ? 'Encontrado neste PC' : 'Não encontrado • caminhos personalizados podem não ser detectados' }}</span><span>{{ game.protection || 'Conservador' }} • {{ game.validation === 'automated_policy' ? 'Política testada por automação; partida pendente' : 'Catálogo existente; reteste por versão necessário' }}</span></div>
+          <button class="ghost favorite-game" [attr.aria-label]="(favoriteGames.includes(game.id) ? 'Remover favorito: ' : 'Favoritar: ') + game.display_name" [attr.aria-pressed]="favoriteGames.includes(game.id)" (click)="toggleFavorite(game.id)">{{ favoriteGames.includes(game.id) ? '★' : '☆' }}</button>
           <span class="game-badge" [class.running]="game.running">{{ game.running ? 'ATIVO' : game.installed ? 'PRONTO' : 'OFF' }}</span>
         </article>
-        <div class="empty-state" *ngIf="games.length === 0"><b>Conectando ao mecanismo de detecção…</b><span>Os quatro jogos validados aparecerão quando o aplicativo desktop estiver online.</span></div>
+        <div class="empty-state" *ngIf="filteredGames.length === 0"><b>{{ games.length ? 'Nenhum jogo neste filtro.' : 'Aguardando o mecanismo de detecção…' }}</b><span>{{ games.length ? 'Tente outra busca ou adicione favoritos.' : 'O catálogo aparecerá quando o mecanismo estiver online.' }}</span></div>
       </div>
       <div class="policy-explain">
-        <div><b>Por que só quatro?</b><span>Cada jogo só entra na lista depois de validar detecção, proteção e rollback. Não adicionamos nomes apenas para parecer que há mais suporte.</span></div>
+        <div><b>Seis novos perfis protegidos</b><span>Fortnite, Fall Guys, PUBG, Rainbow Six Siege, DayZ e Arma 3. Testes automatizados verificam a classificação e o bloqueio de alterações; não substituem partidas reais nem certificação do anticheat.</span></div>
         <div><b>Vanguard automático</b><span>VALORANT e LoL ativam limites não invasivos por cima de Ping, PC ou Completo.</span></div>
         <div><b>Valve automático</b><span>CS2 mantém o processo do jogo intocado e preserva o modo confiável.</span></div>
       </div>
@@ -263,19 +298,26 @@
         </div>
 
         <ng-container *ngIf="secretUnlocked">
-          <div class="theme-group-title secret-title"><div><small>EDIÇÃO LIMITADA</small><b>Arte Secreta desbloqueada</b></div><span>Só neste computador</span></div>
-          <div class="secret-theme-showcase">
-            <button type="button" class="theme-tile secret" [class.selected]="uiTheme === 'secret'" (click)="setTheme('secret')">
-              <i class="theme-swatch"><img src="theme-art/secret/nexuflow-secret-cover.jpg" alt="Prévia da Arte Secreta"><em></em></i>
-              <span><b>Arte Secreta</b><small>Edição dos amigos</small></span><strong>{{ uiTheme === 'secret' ? 'ATIVO' : 'USAR' }}</strong>
+          <div class="theme-group-title secret-title"><div><small>COLEÇÃO LIMITADA 2.1</small><b>{{ unlockedSecretRewards.length }} de 3 universos secretos desbloqueados</b></div><span>Um código para cada arte • só neste computador</span></div>
+          <div class="secret-theme-tiles" role="group" aria-label="Coleção secreta NexuFlow">
+            <button *ngIf="secretOriginUnlocked" id="secret-theme-tile" type="button" class="theme-tile secret secret-origin" [class.selected]="uiTheme === 'secret'" (click)="setTheme('secret')">
+              <i class="theme-swatch"><img src="theme-art/secret/nexuflow-secret-origin-2.1.webp" alt="Prévia da Edição Origem"><em></em></i>
+              <span><b>Edição Origem</b><small>Portal, código e prisma</small></span><strong>{{ uiTheme === 'secret' ? 'ATIVO' : 'USAR' }}</strong>
             </button>
-            <div class="secret-theme-copy"><img src="theme-art/secret/nexuflow-secret-icon.jpg" alt="Ícone original Nexubooster"><div><span class="eyebrow">DESBLOQUEIO ESPECIAL</span><h3>O Fluxo secreto foi encontrado.</h3><p>Ícone, mascote e capa exclusivos. É apenas visual: desempenho, privacidade e proteção anticheat continuam exatamente iguais.</p></div></div>
+            <button *ngIf="secretRioUnlocked" id="secret-rio-theme-tile" type="button" class="theme-tile secret secret-rio" [class.selected]="uiTheme === 'secret-rio'" (click)="setTheme('secret-rio')">
+              <i class="theme-swatch"><img src="theme-art/secret/nexuflow-secret-rio-2.1.webp" alt="Prévia do tema Rio Pulse"><em></em></i>
+              <span><b>Rio Pulse</b><small>Cidade, chuva e sinal</small></span><strong>{{ uiTheme === 'secret-rio' ? 'ATIVO' : 'USAR' }}</strong>
+            </button>
+            <button *ngIf="secretKiwiUnlocked" id="secret-kiwi-theme-tile" type="button" class="theme-tile secret secret-kiwi" [class.selected]="uiTheme === 'secret-kiwi'" (click)="setTheme('secret-kiwi')">
+              <i class="theme-swatch"><img src="theme-art/secret/nexuflow-secret-kiwi-2.1.webp" alt="Prévia do tema Kiwi Signal"><em></em></i>
+              <span><b>Kiwi Signal</b><small>Guardião da floresta</small></span><strong>{{ uiTheme === 'secret-kiwi' ? 'ATIVO' : 'USAR' }}</strong>
+            </button>
           </div>
         </ng-container>
 
-        <div class="flux-story">
-          <div><span class="eyebrow">CONHEÇA O FLUX</span><h3>O espírito da conexão.</h3><p>Um mascote criado do zero para o NexuFlow. Ele muda de atmosfera com o tema, sempre discreto para não atrapalhar a leitura.</p></div>
-          <img src="theme-art/flux-mascot.png" alt="Flux, mascote abstrato original do NexuFlow">
+        <div class="flux-story" [class.joao-story]="isSecretTheme">
+          <div><span class="eyebrow">{{ themeStory.eyebrow }}</span><h3>{{ themeStory.title }}</h3><p>{{ themeStory.copy }}</p></div>
+          <img [src]="isSecretTheme ? themeArtwork : 'theme-art/flux-mascot.png'" [alt]="themeStory.alt" width="1600" height="900" loading="lazy" decoding="async">
         </div>
       </div>
 
@@ -291,10 +333,15 @@
         <button type="button" class="accessibility-control-card contrast-shortcut" (click)="setTheme('high-contrast')">
           <div><small>LEITURA</small><b>Ativar alto contraste</b><p>Remove arte de fundo e reforça bordas, foco e diferença entre textos.</p></div><span>→</span>
         </button>
+        <button type="button" class="accessibility-control-card" (click)="enterWallpaperMode()"><div><small>PAPEL DE PAREDE</small><b>Ver em tela cheia</b><p>Esconde menus e cartões para mostrar a arte inteira. Pressione Esc ou Voltar para retornar.</p></div><span aria-hidden="true">⛶</span></button>
         <div class="accessibility-preview" aria-label="Prévia do tamanho do texto"><small>PRÉVIA AO VIVO</small><b>Informação clara sem quebrar o layout.</b><p>Ping, CPU, memória, avisos e botões usam a mesma escala escolhida acima.</p></div>
         <div class="shortcut-note"><b>Atalhos:</b> Alt+1 Dashboard · Alt+2 Jogos · Alt+3 Histórico · Alt+4 Investigador · Alt+5 Aparência · Alt+6 Ajustes · Alt+7 Código · Esc fecha o painel rápido.</div>
       </div>
     </section>
+  </section>
+
+  <section id="app-content" class="content page-enter" *ngIf="tab === 'account'">
+    <app-account-center></app-account-center>
   </section>
 
   <section id="app-content" class="content page-enter" *ngIf="tab === 'settings'">
@@ -327,8 +374,31 @@
 
       <div class="security-ux-card">
         <div><span class="eyebrow">DESKTOP CLEAN MODE</span><h3>Sem janela CMD no aplicativo instalado</h3><p>O sidecar empacotado usa IPC por arquivo e build windowless. Ao desligar uma otimização ativa, o próprio helper elevado faz o rollback sem pedir uma segunda confirmação do Windows.</p></div>
-        <div class="security-pill"><b>Uma autorização ao abrir</b><span>Desde a 1.5.5, a permissão do Windows é solicitada uma vez por execução. Ativar e desativar não deve repetir a janela enquanto o NexuFlow estiver aberto.</span><button type="button" class="learn-link" (click)="openLearnMore('uac')">Entenda o “Sim ou Não” <b>→</b></button></div>
+        <div class="security-pill"><b>Uma autorização ao ativar</b><span>A janela principal abre sem privilégios. O Windows pergunta apenas quando uma mudança administrativa começa; desligar e restaurar não devem repetir a janela enquanto o motor da sessão estiver ativo.</span><button type="button" class="learn-link" (click)="openLearnMore('uac')">Entenda o “Sim ou Não” <b>→</b></button></div>
       </div>
+
+      <div class="update-center-card" [class.ready]="updates.configured">
+        <div class="update-center-icon" aria-hidden="true">↻</div>
+        <div><span class="eyebrow">CENTRAL DE ATUALIZAÇÕES</span><h3>{{ updates.statusLabel }}</h3><p *ngIf="updates.configured">O NexuFlow verifica pacotes assinados ao abrir e a cada 30 minutos, nunca durante BOOST ou partida protegida.</p><p *ngIf="!updates.configured">A interface e a validação obrigatória já estão prontas. A distribuição automática fica bloqueada até existir uma chave pública definitiva e um GitHub Release oficial — sem assinatura, nenhum pacote será instalado.</p><small *ngIf="updates.error">{{ updates.error }}</small></div>
+        <button type="button" class="update-check-button" (click)="checkForUpdates()" [disabled]="updates.state === 'checking' || updates.state === 'downloading'">{{ updates.state === 'checking' ? 'Verificando…' : 'Verificar agora' }}</button>
+      </div>
+
+      <section class="subscription-preview" aria-labelledby="subscription-title">
+        <div class="subscription-heading">
+          <div><span class="eyebrow">PORTAS ABERTAS • PREPARAÇÃO SEGURA</span><h2 id="subscription-title">Planos avançados sem tirar o core gratuito</h2><p>O pagamento permanece bloqueado até o backend, o Mercado Pago e a política de privacidade estarem publicados. Nenhum botão finge uma compra.</p></div>
+          <span class="subscription-state">EM PREPARAÇÃO</span>
+        </div>
+        <div class="pricing-grid">
+          <article *ngFor="let plan of subscription.plans" [class.highlight]="plan.highlight">
+            <small>{{ plan.label }}</small><b><sup>R$</sup>{{ plan.priceBrl }}</b><span>{{ plan.durationLabel }}</span>
+          </article>
+        </div>
+        <div class="subscription-split">
+          <div><small>GRÁTIS PRA SEMPRE</small><p>{{ subscription.freeFeatures.join(' • ') }}</p></div>
+          <div><small>ASSINATURA</small><p>{{ subscription.premiumFeatures.join(' • ') }}</p></div>
+          <div class="duo-seat"><small>DUO SEGURO</small><p>{{ subscription.duoPolicy }}</p><strong>Sem compartilhar senha • qualquer e-mail verificado</strong></div>
+        </div>
+      </section>
 
       <div class="driver-center health-card">
         <div class="section-title">
@@ -427,19 +497,20 @@
     <section class="redeem-vault glass" [class.open]="secretUnlocked">
       <div class="vault-art" aria-hidden="true">
         <div class="vault-mystery" *ngIf="!secretUnlocked"><span>?</span><i></i><i></i><i></i></div>
-        <img *ngIf="secretUnlocked" class="vault-cover" src="theme-art/secret/nexuflow-secret-cover.jpg" alt="">
+        <img *ngIf="secretUnlocked" class="vault-cover" [src]="vaultArtwork" alt="">
         <div class="vault-lock"><svg viewBox="0 0 24 24"><use [attr.href]="secretUnlocked ? '#icon-secret' : '#icon-key'"></use></svg></div>
       </div>
       <div class="vault-copy">
-        <span class="eyebrow">{{ secretUnlocked ? 'ARTE ORIGINAL DESBLOQUEADA' : 'COFRE NEXUFLOW' }}</span>
-        <h2>{{ secretUnlocked ? 'Você encontrou a edição secreta.' : 'Tem um código dos amigos?' }}</h2>
-        <p>{{ secretUnlocked ? 'O tema exclusivo já aparece em Aparência e fica guardado somente neste computador.' : 'Digite a chave abaixo. O código é validado localmente e nunca é enviado pela internet.' }}</p>
-        <div class="redeem-form" *ngIf="!secretUnlocked">
+        <span class="eyebrow">{{ secretUnlocked ? 'COLEÇÃO SECRETA • ' + unlockedSecretRewards.length + '/3' : 'COFRE NEXUFLOW' }}</span>
+        <h2>{{ secretUnlocked ? 'Sua coleção começou.' : 'Tem um código dos amigos?' }}</h2>
+        <p>{{ secretUnlocked ? 'Cada código libera somente a própria arte. Os temas resgatados ficam guardados neste computador.' : 'Digite a chave abaixo. O código é validado localmente e nunca é enviado pela internet.' }}</p>
+        <div class="redeem-form" *ngIf="!secretUnlocked || secretCodeFormOpen">
           <label for="secret-code">Código de desbloqueio</label>
-          <div><input id="secret-code" [(ngModel)]="secretCodeDraft" (keyup.enter)="redeemSecretCode()" type="password" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-000"><button type="button" (click)="redeemSecretCode()">Desbloquear</button></div>
+          <div><input id="secret-code" [(ngModel)]="secretCodeDraft" (keyup.enter)="redeemSecretCode()" [disabled]="secretCodeBusy" type="password" autocomplete="off" spellcheck="false" maxlength="80" placeholder="Digite seu código"><button type="button" (click)="redeemSecretCode()" [disabled]="secretCodeBusy">{{ secretCodeBusy ? 'Validando…' : 'Resgatar' }}</button></div>
+          <small class="code-help">Cada tema tem uma chave diferente. Para testar do zero, digite <code>RESET-CODIGOS</code>; isso remove somente os resgates.</small>
         </div>
-        <div class="redeem-result" [class.success]="secretUnlocked"><svg viewBox="0 0 24 24"><use [attr.href]="secretUnlocked ? '#icon-secret' : '#icon-key'"></use></svg><span>{{ secretCodeMessage }}</span></div>
-        <button *ngIf="secretUnlocked" type="button" class="secret-appearance-button" (click)="setTab('appearance')">Ver em Aparência <b>→</b></button>
+        <div class="redeem-result" role="status" aria-live="polite" [class.success]="secretUnlocked"><svg viewBox="0 0 24 24"><use [attr.href]="secretUnlocked ? '#icon-secret' : '#icon-key'"></use></svg><span>{{ secretCodeMessage }}</span></div>
+        <div *ngIf="secretUnlocked" class="redeem-actions"><button type="button" class="secret-appearance-button" (click)="setTab('appearance')">Ver em Aparência <b>→</b></button><button type="button" class="ghost" (click)="openCodeForm()" [attr.aria-expanded]="secretCodeFormOpen" aria-controls="secret-code">{{ secretCodeFormOpen ? 'Fechar códigos' : 'Resgatar outro código' }}</button></div>
         <small class="vault-safety">Somente aparência • zero efeito no BOOST • sem telemetria • sem conexão externa</small>
       </div>
     </section>

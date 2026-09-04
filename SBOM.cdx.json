@@ -1,13 +1,13 @@
 ﻿{
     "bomFormat":  "CycloneDX",
     "specVersion":  "1.5",
-    "serialNumber":  "urn:uuid:6e786631-3600-4000-8000-000000000160",
+    "serialNumber":  "urn:uuid:6e786631-3600-4000-8000-000000000161",
     "version":  1,
     "metadata":  {
                      "component":  {
                                        "type":  "application",
                                        "name":  "NexuFlow",
-                                       "version":  "1.6.0"
+                                       "version":  "2.1.0-beta.1"
                                    }
                  },
     "components":  [
@@ -1426,6 +1426,12 @@
                            "name":  "@tauri-apps/cli-win32-x64-msvc",
                            "version":  "2.11.4",
                            "purl":  "pkg:npm/@tauri-apps/cli-win32-x64-msvc@2.11.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "@tauri-apps/plugin-updater",
+                           "version":  "2.11.0",
+                           "purl":  "pkg:npm/@tauri-apps/plugin-updater@2.11.0"
                        },
                        {
                            "type":  "library",
@@ -3337,6 +3343,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "arbitrary",
+                           "version":  "1.4.2",
+                           "purl":  "pkg:cargo/arbitrary@1.4.2"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "atk",
                            "version":  "0.18.2",
                            "purl":  "pkg:cargo/atk@0.18.2"
@@ -3536,6 +3548,12 @@
                        {
                            "type":  "library",
                            "name":  "core-foundation",
+                           "version":  "0.9.4",
+                           "purl":  "pkg:cargo/core-foundation@0.9.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "core-foundation",
                            "version":  "0.10.1",
                            "purl":  "pkg:cargo/core-foundation@0.10.1"
                        },
@@ -3658,6 +3676,12 @@
                            "name":  "deranged",
                            "version":  "0.5.8",
                            "purl":  "pkg:cargo/deranged@0.5.8"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "derive_arbitrary",
+                           "version":  "1.4.2",
+                           "purl":  "pkg:cargo/derive_arbitrary@1.4.2"
                        },
                        {
                            "type":  "library",
@@ -3814,6 +3838,12 @@
                            "name":  "field-offset",
                            "version":  "0.3.6",
                            "purl":  "pkg:cargo/field-offset@0.3.6"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "filetime",
+                           "version":  "0.2.29",
+                           "purl":  "pkg:cargo/filetime@0.2.29"
                        },
                        {
                            "type":  "library",
@@ -4105,6 +4135,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "hyper-rustls",
+                           "version":  "0.27.9",
+                           "purl":  "pkg:cargo/hyper-rustls@0.27.9"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "hyper-util",
                            "version":  "0.1.20",
                            "purl":  "pkg:cargo/hyper-util@0.1.20"
@@ -4279,6 +4315,18 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "jni",
+                           "version":  "0.22.4",
+                           "purl":  "pkg:cargo/jni@0.22.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "jni-macros",
+                           "version":  "0.22.4",
+                           "purl":  "pkg:cargo/jni-macros@0.22.4"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "jni-sys",
                            "version":  "0.3.1",
                            "purl":  "pkg:cargo/jni-sys@0.3.1"
@@ -4357,6 +4405,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "linux-raw-sys",
+                           "version":  "0.12.1",
+                           "purl":  "pkg:cargo/linux-raw-sys@0.12.1"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "litemap",
                            "version":  "0.8.3",
                            "purl":  "pkg:cargo/litemap@0.8.3"
@@ -4396,6 +4450,12 @@
                            "name":  "mime",
                            "version":  "0.3.17",
                            "purl":  "pkg:cargo/mime@0.3.17"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "minisign-verify",
+                           "version":  "0.2.5",
+                           "purl":  "pkg:cargo/minisign-verify@0.2.5"
                        },
                        {
                            "type":  "library",
@@ -4442,8 +4502,8 @@
                        {
                            "type":  "library",
                            "name":  "nexuflow",
-                           "version":  "1.6.0",
-                           "purl":  "pkg:cargo/nexuflow@1.6.0"
+                           "version":  "2.1.0-beta.1",
+                           "purl":  "pkg:cargo/nexuflow@2.1.0-beta.1"
                        },
                        {
                            "type":  "library",
@@ -4549,6 +4609,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "objc2-osa-kit",
+                           "version":  "0.3.2",
+                           "purl":  "pkg:cargo/objc2-osa-kit@0.3.2"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "objc2-quartz-core",
                            "version":  "0.3.2",
                            "purl":  "pkg:cargo/objc2-quartz-core@0.3.2"
@@ -4585,6 +4651,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "openssl-probe",
+                           "version":  "0.2.1",
+                           "purl":  "pkg:cargo/openssl-probe@0.2.1"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "option-ext",
                            "version":  "0.2.0",
                            "purl":  "pkg:cargo/option-ext@0.2.0"
@@ -4594,6 +4666,12 @@
                            "name":  "os_pipe",
                            "version":  "1.2.3",
                            "purl":  "pkg:cargo/os_pipe@1.2.3"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "osakit",
+                           "version":  "0.3.1",
+                           "purl":  "pkg:cargo/osakit@0.3.1"
                        },
                        {
                            "type":  "library",
@@ -4831,6 +4909,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "ring",
+                           "version":  "0.17.14",
+                           "purl":  "pkg:cargo/ring@0.17.14"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "rustc-hash",
                            "version":  "2.1.3",
                            "purl":  "pkg:cargo/rustc-hash@2.1.3"
@@ -4843,6 +4927,48 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "rustix",
+                           "version":  "1.1.4",
+                           "purl":  "pkg:cargo/rustix@1.1.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls",
+                           "version":  "0.23.43",
+                           "purl":  "pkg:cargo/rustls@0.23.43"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls-native-certs",
+                           "version":  "0.8.4",
+                           "purl":  "pkg:cargo/rustls-native-certs@0.8.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls-pki-types",
+                           "version":  "1.15.1",
+                           "purl":  "pkg:cargo/rustls-pki-types@1.15.1"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls-platform-verifier",
+                           "version":  "0.7.0",
+                           "purl":  "pkg:cargo/rustls-platform-verifier@0.7.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls-platform-verifier-android",
+                           "version":  "0.1.1",
+                           "purl":  "pkg:cargo/rustls-platform-verifier-android@0.1.1"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "rustls-webpki",
+                           "version":  "0.103.15",
+                           "purl":  "pkg:cargo/rustls-webpki@0.103.15"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "rustversion",
                            "version":  "1.0.23",
                            "purl":  "pkg:cargo/rustversion@1.0.23"
@@ -4852,6 +4978,12 @@
                            "name":  "same-file",
                            "version":  "1.0.6",
                            "purl":  "pkg:cargo/same-file@1.0.6"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "schannel",
+                           "version":  "0.1.29",
+                           "purl":  "pkg:cargo/schannel@0.1.29"
                        },
                        {
                            "type":  "library",
@@ -4882,6 +5014,18 @@
                            "name":  "scopeguard",
                            "version":  "1.2.0",
                            "purl":  "pkg:cargo/scopeguard@1.2.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "security-framework",
+                           "version":  "3.7.0",
+                           "purl":  "pkg:cargo/security-framework@3.7.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "security-framework-sys",
+                           "version":  "2.17.0",
+                           "purl":  "pkg:cargo/security-framework-sys@2.17.0"
                        },
                        {
                            "type":  "library",
@@ -5023,6 +5167,18 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "simd_cesu8",
+                           "version":  "1.2.0",
+                           "purl":  "pkg:cargo/simd_cesu8@1.2.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "simdutf8",
+                           "version":  "0.1.5",
+                           "purl":  "pkg:cargo/simdutf8@0.1.5"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "siphasher",
                            "version":  "1.0.3",
                            "purl":  "pkg:cargo/siphasher@1.0.3"
@@ -5089,6 +5245,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "subtle",
+                           "version":  "2.6.1",
+                           "purl":  "pkg:cargo/subtle@2.6.1"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "swift-rs",
                            "version":  "1.0.8",
                            "purl":  "pkg:cargo/swift-rs@1.0.8"
@@ -5125,6 +5287,18 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "system-configuration",
+                           "version":  "0.7.0",
+                           "purl":  "pkg:cargo/system-configuration@0.7.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "system-configuration-sys",
+                           "version":  "0.6.0",
+                           "purl":  "pkg:cargo/system-configuration-sys@0.6.0"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "system-deps",
                            "version":  "6.2.2",
                            "purl":  "pkg:cargo/system-deps@6.2.2"
@@ -5140,6 +5314,12 @@
                            "name":  "tao-macros",
                            "version":  "0.1.4",
                            "purl":  "pkg:cargo/tao-macros@0.1.4"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "tar",
+                           "version":  "0.4.46",
+                           "purl":  "pkg:cargo/tar@0.4.46"
                        },
                        {
                            "type":  "library",
@@ -5185,6 +5365,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "tauri-plugin-updater",
+                           "version":  "2.11.0",
+                           "purl":  "pkg:cargo/tauri-plugin-updater@2.11.0"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "tauri-runtime",
                            "version":  "2.11.3",
                            "purl":  "pkg:cargo/tauri-runtime@2.11.3"
@@ -5206,6 +5392,12 @@
                            "name":  "tauri-winres",
                            "version":  "0.3.6",
                            "purl":  "pkg:cargo/tauri-winres@0.3.6"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "tempfile",
+                           "version":  "3.27.0",
+                           "purl":  "pkg:cargo/tempfile@3.27.0"
                        },
                        {
                            "type":  "library",
@@ -5278,6 +5470,12 @@
                            "name":  "tokio",
                            "version":  "1.53.1",
                            "purl":  "pkg:cargo/tokio@1.53.1"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "tokio-rustls",
+                           "version":  "0.26.4",
+                           "purl":  "pkg:cargo/tokio-rustls@0.26.4"
                        },
                        {
                            "type":  "library",
@@ -5455,6 +5653,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "untrusted",
+                           "version":  "0.9.0",
+                           "purl":  "pkg:cargo/untrusted@0.9.0"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "url",
                            "version":  "2.5.8",
                            "purl":  "pkg:cargo/url@2.5.8"
@@ -5587,6 +5791,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "webpki-root-certs",
+                           "version":  "1.0.9",
+                           "purl":  "pkg:cargo/webpki-root-certs@1.0.9"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "webview2-com",
                            "version":  "0.38.2",
                            "purl":  "pkg:cargo/webview2-com@0.38.2"
@@ -5695,6 +5905,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "windows-registry",
+                           "version":  "0.6.1",
+                           "purl":  "pkg:cargo/windows-registry@0.6.1"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "windows-result",
                            "version":  "0.3.4",
                            "purl":  "pkg:cargo/windows-result@0.3.4"
@@ -5722,6 +5938,12 @@
                            "name":  "windows-sys",
                            "version":  "0.45.0",
                            "purl":  "pkg:cargo/windows-sys@0.45.0"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "windows-sys",
+                           "version":  "0.52.0",
+                           "purl":  "pkg:cargo/windows-sys@0.52.0"
                        },
                        {
                            "type":  "library",
@@ -5965,6 +6187,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "xattr",
+                           "version":  "1.6.1",
+                           "purl":  "pkg:cargo/xattr@1.6.1"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "yoke",
                            "version":  "0.8.3",
                            "purl":  "pkg:cargo/yoke@0.8.3"
@@ -5989,6 +6217,12 @@
                        },
                        {
                            "type":  "library",
+                           "name":  "zeroize",
+                           "version":  "1.9.0",
+                           "purl":  "pkg:cargo/zeroize@1.9.0"
+                       },
+                       {
+                           "type":  "library",
                            "name":  "zerotrie",
                            "version":  "0.2.5",
                            "purl":  "pkg:cargo/zerotrie@0.2.5"
@@ -6004,6 +6238,12 @@
                            "name":  "zerovec-derive",
                            "version":  "0.11.6",
                            "purl":  "pkg:cargo/zerovec-derive@0.11.6"
+                       },
+                       {
+                           "type":  "library",
+                           "name":  "zip",
+                           "version":  "4.6.1",
+                           "purl":  "pkg:cargo/zip@4.6.1"
                        },
                        {
                            "type":  "library",

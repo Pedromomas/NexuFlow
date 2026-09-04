@@ -1,6 +1,6 @@
 [package]
 name = "nexuflow"
-version = "1.6.0"
+version = "2.1.0-beta.1"
 description = "NexuFlow desktop host"
 authors = ["NexuFlow contributors"]
 edition = "2021"
@@ -9,13 +9,18 @@ edition = "2021"
 name = "nexuflow_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+default = []
+signed-updater = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.5", features = [] }
+tauri = { version = "2.11.5", features = ["tray-icon"] }
 tauri-plugin-shell = "2.3.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["time"] }
+tokio = { version = "1", features = ["time", "sync"] }
 uuid = { version = "1", features = ["v4"] }
+tauri-plugin-updater = "2"

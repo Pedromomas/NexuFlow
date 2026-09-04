@@ -9,10 +9,18 @@
       "problemMatcher": []
     },
     {
-      "label": "Nexus: Dev",
+      "label": "NexuFlow: Abrir aplicativo completo",
       "type": "shell",
       "command": "powershell",
       "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\dev.ps1"],
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "NexuFlow: Somente interface web (sem engine)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "ionic:serve"],
       "problemMatcher": [],
       "isBackground": true
     },

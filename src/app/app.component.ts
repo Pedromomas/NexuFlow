@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonApp } from '@ionic/angular';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import {
   BoostProfile,
   DriverScanReport,
@@ -14,9 +15,14 @@ import {
   Telemetry
 } from './core/models';
 import { NexusService } from './core/nexus.service';
+import { PerformanceCenterComponent } from './performance-center.component';
+import { UpdateService } from './core/update.service';
+import { SubscriptionService } from './core/subscription.service';
+import { AccountCenterComponent } from './account-center.component';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem';
-type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret';
+type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem' | 'connection' | 'pc' | 'account';
+type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret' | 'secret-rio' | 'secret-kiwi';
+type SecretRewardId = 'origin' | 'rio' | 'kiwi';
 type AppearanceSection = 'themes' | 'accessibility';
 type LearnTopic = 'ping' | 'pc' | 'complete' | 'hardcore_safe' | 'uac';
 
@@ -28,10 +34,21 @@ interface LearnMoreContent {
   glossary?: Array<{ term: string; meaning: string }>;
 }
 
+interface SecretReward {
+  id: SecretRewardId;
+  theme: Extract<UiTheme, 'secret' | 'secret-rio' | 'secret-kiwi'>;
+  digest: string;
+  title: string;
+  eyebrow: string;
+  message: string;
+  artwork: string;
+  animationClass: string;
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonApp],
+  imports: [CommonModule, FormsModule, IonApp, PerformanceCenterComponent, AccountCenterComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -40,9 +57,14 @@ export class AppComponent implements OnInit, OnDestroy {
   profile: BoostProfile = 'complete';
   boosted = false;
   busy = false;
+  boostIntent: 'idle' | 'starting' | 'stopping' = 'idle';
+  boostStartedAt = 0;
   message = 'Pronto para otimizar';
   telemetry: Telemetry | null = null;
   games: GameInfo[] = [];
+  gameQuery = '';
+  gameFilter: 'all' | 'installed' | 'favorites' = 'all';
+  favoriteGames: string[] = [];
   history: SessionRecord[] = [];
   investigator: InvestigatorSnapshot | null = null;
   gamingHealth: GamingHealth = {};
@@ -62,45 +84,130 @@ export class AppComponent implements OnInit, OnDestroy {
   fontScale = 100;
   reducedMotion = false;
   accessibilityOpen = false;
+  wallpaperMode = false;
+  wallpaperBusy = false;
+  unlockCelebration = false;
+  secretAudioState: 'idle' | 'playing' | 'blocked' = 'idle';
+  private secretAudio: HTMLAudioElement | null = null;
+  private wallpaperReturnFocus: HTMLElement | null = null;
+  private previousFullscreen = false;
   appearanceSection: AppearanceSection = 'themes';
-  secretUnlocked = false;
+  unlockedSecretRewards: SecretRewardId[] = [];
+  lastUnlockedSecret: SecretRewardId | null = null;
   secretCodeDraft = '';
+  secretCodeFormOpen = false;
+  secretCodeBusy = false;
   secretCodeMessage = 'Digite um código para revelar conteúdos cosméticos guardados neste computador.';
   learnTopic: LearnTopic | null = null;
   private timer?: ReturnType<typeof setInterval>;
+  private desktopUnlisten?: UnlistenFn;
+  private destroyed = false;
   private tick = 0;
+  private periodicRefreshRunning = false;
   private readonly uiPrefsKey = 'nexuflow_ui_preferences_v1';
-  private readonly secretUnlockKey = 'nexuflow_secret_art_unlocked_v1';
-  private readonly secretCodeDigest = 'cc4a2c7e4588853f351cdb6b3fb919a7118280aa2d76aa4921b84fa7acfeb529';
+  private readonly legacySecretUnlockKey = 'nexuflow_secret_art_unlocked_v1';
+  private readonly secretUnlockKey = 'nexuflow_secret_rewards_v2';
+  private readonly secretRewards: readonly SecretReward[] = [
+    {
+      id: 'origin', theme: 'secret',
+      digest: 'cc4a2c7e4588853f351cdb6b3fb919a7118280aa2d76aa4921b84fa7acfeb529',
+      title: 'Edição Origem', eyebrow: 'ARTE SECRETA DESBLOQUEADA',
+      message: 'Portal, código e prisma chegaram à sua galeria.',
+      artwork: 'theme-art/secret/nexuflow-secret-origin-2.1.webp', animationClass: 'unlock-origin'
+    },
+    {
+      id: 'rio', theme: 'secret-rio',
+      digest: '2bf18b00500f5322ce14ad30946d028d5adb6c03eacb6f1f6edbd5252f7a9054',
+      title: 'Rio Pulse', eyebrow: 'SINAL SECRETO CAPTURADO',
+      message: 'A cidade acendeu em azul, vermelho e chuva digital.',
+      artwork: 'theme-art/secret/nexuflow-secret-rio-2.1.webp', animationClass: 'unlock-rio'
+    },
+    {
+      id: 'kiwi', theme: 'secret-kiwi',
+      digest: '2111aa7fb6416e6edf2ba8fe475a7f91d10e82b816fff950e1f16d4cbe23df15',
+      title: 'Kiwi Signal', eyebrow: 'GUARDIÃO ENCONTRADO',
+      message: 'O pequeno guardião despertou a floresta de sinais.',
+      artwork: 'theme-art/secret/nexuflow-secret-kiwi-2.1.webp', animationClass: 'unlock-kiwi'
+    }
+  ];
   private readonly boostModeKey = 'nexuflow_boost_mode_v155';
   private readonly legacyBoostModeKey = 'nexuflow_boost_mode_v150';
   private readonly olderBoostModeKey = 'nexuflow_boost_mode_v142';
 
-  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef) {
+  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef, public readonly updates: UpdateService, public readonly subscription: SubscriptionService) {
     this.apiTokenDraft = this.nexus.getStoredApiToken();
     this.transport = this.nexus.transportLabel();
     this.desktopMode = this.nexus.isDesktop();
     this.loadSecretUnlock();
     this.loadUiPreferences();
     this.loadBoostMode();
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem('nexuflow_favorite_games_v17') || '[]');
+      if (Array.isArray(stored)) this.favoriteGames = stored.filter(x => typeof x === 'string').slice(0, 50);
+    } catch { /* Favorites are optional. */ }
   }
 
   async ngOnInit(): Promise<void> {
+    if (this.desktopMode) {
+      const unlisten = await listen<string>('desktop-status', event => {
+        this.message = event.payload;
+        if (this.wallpaperMode) void this.exitWallpaperMode();
+        this.cdr.markForCheck();
+      });
+      if (this.destroyed) { unlisten(); return; }
+      this.desktopUnlisten = unlisten;
+    }
     await this.checkCrashRecovery();
-    await Promise.all([this.refreshTelemetry(), this.refreshGames(), this.refreshHealth(), this.refreshHistory()]);
-    this.timer = setInterval(() => void this.periodicRefresh(), 1000);
+    // Read protection first so updater traffic is never started blindly while
+    // an anti-cheat session is already active. The other cards may load later.
+    await this.refreshTelemetry();
+    await this.updates.initialize();
+    void this.updates.checkWhenSafe(this.protectedGameActive, this.boosted);
+    await Promise.all([this.refreshGames(), this.refreshHealth(), this.refreshHistory()]);
+    if (!this.destroyed) this.timer = setInterval(() => void this.periodicRefresh(), 1000);
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.stopSecretAudio();
+    this.desktopUnlisten?.();
     if (this.timer) clearInterval(this.timer);
   }
 
   private async periodicRefresh(): Promise<void> {
-    this.tick += 1;
-    await this.refreshTelemetry();
-    if (this.tick % 3 === 0) await this.refreshGames();
-    if (this.tick % 15 === 0) await this.refreshHealth();
-    if (this.tab === 'investigator' && this.tick % 3 === 0) await this.refreshInvestigator();
+    if (this.destroyed || this.periodicRefreshRunning) return;
+    this.periodicRefreshRunning = true;
+    try {
+      this.tick += 1;
+      await this.refreshTelemetry();
+      if (this.tick % 3 === 0) await this.refreshGames();
+      if (this.tick % 15 === 0) await this.refreshHealth();
+      if (this.tab === 'investigator' && this.tick % 3 === 0) await this.refreshInvestigator();
+      if (this.tick % 1800 === 0) await this.updates.checkWhenSafe(this.protectedGameActive, this.boosted);
+    } catch {
+      // A slow/offline engine must not create overlapping refresh promises.
+    } finally {
+      this.periodicRefreshRunning = false;
+    }
+  }
+
+  get protectedGameActive(): boolean {
+    return !!this.telemetry?.anti_cheat?.active || ['riot_safe', 'valve_safe', 'protected_safe'].includes(this.telemetry?.effective_profile ?? '');
+  }
+
+  async installUpdate(): Promise<void> {
+    if (this.protectedGameActive || this.boosted) {
+      this.message = 'Atualização adiada: desative o BOOST e feche a partida protegida.';
+      return;
+    }
+    await this.updates.install();
+    this.cdr.markForCheck();
+  }
+
+  async checkForUpdates(): Promise<void> {
+    await this.updates.checkNow(this.protectedGameActive, this.boosted);
+    this.message = this.updates.error || this.updates.statusLabel;
+    this.cdr.markForCheck();
   }
 
   private async checkCrashRecovery(): Promise<void> {
@@ -125,7 +232,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.tab = tab;
     if (tab === 'history') void this.refreshHistory();
     if (tab === 'investigator') void this.refreshInvestigator();
-    if (tab === 'settings') void this.refreshHealth();
+    if (tab === 'settings' || tab === 'pc') void this.refreshHealth();
     this.cdr.markForCheck();
     queueMicrotask(() => this.scrollToTop());
   }
@@ -136,53 +243,239 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async redeemSecretCode(): Promise<void> {
-    if (this.secretUnlocked) {
-      this.secretCodeMessage = 'A Arte Secreta já está desbloqueada neste computador.';
-      this.tab = 'appearance';
-      this.appearanceSection = 'themes';
+    if (this.secretCodeBusy) return;
+    const normalized = this.secretCodeDraft.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (normalized === 'RESETCODIGOS') {
+      try {
+        this.stopSecretAudio();
+        localStorage.removeItem(this.secretUnlockKey);
+        localStorage.removeItem(this.legacySecretUnlockKey);
+        this.unlockedSecretRewards = [];
+        this.lastUnlockedSecret = null;
+        this.unlockCelebration = false;
+        this.secretCodeDraft = '';
+        this.secretCodeFormOpen = false;
+        if (this.isSecretTheme) this.setTheme('nebula');
+        this.secretCodeMessage = 'Resgates removidos. Você pode testar o código novamente.';
+      } catch {
+        this.secretCodeMessage = 'Não foi possível remover o resgate salvo. Tente novamente.';
+      }
       this.cdr.markForCheck();
       return;
     }
-
-    const normalized = this.secretCodeDraft.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!normalized) {
       this.secretCodeMessage = 'Digite o código antes de confirmar.';
       this.cdr.markForCheck();
       return;
     }
 
+    this.secretCodeBusy = true;
     try {
       const bytes = new TextEncoder().encode(normalized);
       const digest = await crypto.subtle.digest('SHA-256', bytes);
       const hex = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
-      if (hex !== this.secretCodeDigest) {
+      const reward = this.secretRewards.find(candidate => candidate.digest === hex);
+      if (!reward) {
         this.secretCodeMessage = 'Código não reconhecido. Confira os caracteres e tente novamente.';
         this.secretCodeDraft = '';
         this.cdr.markForCheck();
         return;
       }
 
-      this.secretUnlocked = true;
-      localStorage.setItem(this.secretUnlockKey, '1');
+      if (this.unlockedSecretRewards.includes(reward.id)) {
+        this.secretCodeDraft = '';
+        this.secretCodeMessage = `${reward.title} já foi resgatado. Cada outro tema exige o próprio código.`;
+        return;
+      }
+      this.unlockedSecretRewards = [...this.unlockedSecretRewards, reward.id];
+      localStorage.setItem(this.secretUnlockKey, JSON.stringify(this.unlockedSecretRewards));
+      this.lastUnlockedSecret = reward.id;
+      this.secretCodeFormOpen = false;
       this.secretCodeDraft = '';
-      this.secretCodeMessage = 'Arte Secreta desbloqueada! Ela já está ativa e disponível em Aparência.';
-      this.uiTheme = 'secret';
+      this.secretCodeMessage = `${reward.title} desbloqueado! Só esse tema foi adicionado à Aparência.`;
+      this.uiTheme = reward.theme;
       this.appearanceSection = 'themes';
       this.tab = 'appearance';
+      this.unlockCelebration = true;
       this.applyUiPreferences();
       this.persistUiPreferences();
+      if (reward.id === 'origin') void this.playSecretUnlockAudio();
+      setTimeout(() => document.getElementById('unlock-continue')?.focus());
     } catch {
       this.secretCodeMessage = 'Não foi possível validar o código neste ambiente.';
+    } finally {
+      this.secretCodeBusy = false;
+      this.cdr.markForCheck();
     }
+  }
+
+  openCodeForm(): void {
+    this.secretCodeFormOpen = !this.secretCodeFormOpen;
     this.cdr.markForCheck();
+    if (this.secretCodeFormOpen) setTimeout(() => document.getElementById('secret-code')?.focus());
+  }
+
+  get wallpaperArtwork(): string {
+    return this.isSecretTheme ? this.themeArtwork : 'theme-art/flux-mascot.png';
+  }
+
+  get isSecretTheme(): boolean {
+    return ['secret', 'secret-rio', 'secret-kiwi'].includes(this.uiTheme);
+  }
+
+  get secretUnlocked(): boolean {
+    return this.unlockedSecretRewards.length > 0;
+  }
+
+  get secretOriginUnlocked(): boolean { return this.unlockedSecretRewards.includes('origin'); }
+  get secretRioUnlocked(): boolean { return this.unlockedSecretRewards.includes('rio'); }
+  get secretKiwiUnlocked(): boolean { return this.unlockedSecretRewards.includes('kiwi'); }
+
+  get unlockReward(): SecretReward {
+    return this.secretRewards.find(reward => reward.id === this.lastUnlockedSecret) ?? this.secretRewards[0];
+  }
+
+  get vaultArtwork(): string {
+    if (this.isSecretTheme && this.isThemeUnlocked(this.uiTheme)) return this.themeArtwork;
+    const reward = this.secretRewards.find(candidate => this.unlockedSecretRewards.includes(candidate.id));
+    return reward?.artwork ?? this.secretRewards[0].artwork;
+  }
+
+  get themeArtwork(): string {
+    const artwork: Partial<Record<UiTheme, string>> = {
+      secret: 'theme-art/secret/nexuflow-secret-origin-2.1.webp',
+      'secret-rio': 'theme-art/secret/nexuflow-secret-rio-2.1.webp',
+      'secret-kiwi': 'theme-art/secret/nexuflow-secret-kiwi-2.1.webp'
+    };
+    return artwork[this.uiTheme] ?? 'theme-art/flux-mascot.png';
+  }
+
+  get themeStory(): {eyebrow: string; title: string; copy: string; alt: string} {
+    if (this.uiTheme === 'secret-rio') return {
+      eyebrow: 'RIO PULSE', title: 'A cidade virou sinal.',
+      copy: 'Chuva, morro, baía e pulsos de rede em um Rio futurista e fictício. Sem facções reais e sem alterar nenhuma função do motor.',
+      alt: 'Paisagem urbana futurista do tema Rio Pulse'
+    };
+    if (this.uiTheme === 'secret-kiwi') return {
+      eyebrow: 'KIWI SIGNAL', title: 'Pequeno guardião, fluxo gigante.',
+      copy: 'Um kiwi vigia os sinais da floresta bioluminescente. A atmosfera muda por inteiro; segurança e desempenho permanecem iguais.',
+      alt: 'Kiwi guardião em floresta bioluminescente'
+    };
+    if (this.uiTheme === 'secret') return {
+      eyebrow: 'CONHEÇA O JOÃO', title: 'A origem da edição dos amigos.',
+      copy: 'João ganhou um universo amplo de portal, código e luz. A arte especial agora transforma toda a interface.',
+      alt: 'João no universo da Edição Origem'
+    };
+    return {
+      eyebrow: 'CONHEÇA O FLUX', title: 'O espírito da conexão.',
+      copy: 'Um mascote criado do zero para o NexuFlow. Ele muda de atmosfera com o tema, sempre discreto para não atrapalhar a leitura.',
+      alt: 'Flux, mascote abstrato original do NexuFlow'
+    };
+  }
+
+  dismissUnlockCelebration(): void {
+    this.stopSecretAudio();
+    this.unlockCelebration = false;
+    this.cdr.markForCheck();
+    setTimeout(() => document.getElementById('secret-theme-tile')?.focus());
+  }
+
+  async playSecretUnlockAudio(): Promise<void> {
+    if (!this.unlockCelebration || this.lastUnlockedSecret !== 'origin') return;
+    this.stopSecretAudio();
+    const clip = new Audio('theme-art/secret/secret-unlock.mp3');
+    this.secretAudio = clip;
+    clip.volume = 0.7;
+    clip.loop = false;
+    clip.onended = () => {
+      if (this.secretAudio !== clip) return;
+      this.secretAudioState = 'idle';
+      this.cdr.markForCheck();
+    };
+    try {
+      await clip.play();
+      if (this.secretAudio === clip) this.secretAudioState = 'playing';
+    } catch {
+      // Autoplay or device failure must never undo a successful reward.
+      if (this.secretAudio === clip) this.secretAudioState = 'blocked';
+    }
+    if (!this.destroyed) this.cdr.markForCheck();
+  }
+
+  stopSecretAudio(): void {
+    if (this.secretAudio) {
+      this.secretAudio.onended = null;
+      this.secretAudio.pause();
+      this.secretAudio.currentTime = 0;
+      this.secretAudio = null;
+    }
+    this.secretAudioState = 'idle';
+  }
+
+  async enterWallpaperMode(): Promise<void> {
+    if (this.wallpaperBusy || this.wallpaperMode) return;
+    this.wallpaperBusy = true;
+    this.wallpaperReturnFocus = document.activeElement as HTMLElement | null;
+    this.wallpaperMode = true;
+    this.cdr.markForCheck();
+    try {
+      if (this.desktopMode) {
+        this.previousFullscreen = await this.nexus.setArtworkFullscreen(true);
+      } else if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        this.previousFullscreen = false;
+      } else {
+        this.previousFullscreen = !!document.fullscreenElement;
+      }
+    } catch {
+      // The clean artwork view still works if fullscreen is unavailable.
+      this.previousFullscreen = false;
+    } finally {
+      this.wallpaperBusy = false;
+      this.cdr.markForCheck();
+      setTimeout(() => document.getElementById('wallpaper-exit')?.focus());
+    }
+  }
+
+  async exitWallpaperMode(): Promise<void> {
+    if (this.wallpaperBusy || !this.wallpaperMode) return;
+    this.wallpaperBusy = true;
+    try {
+      if (this.desktopMode) await this.nexus.setArtworkFullscreen(this.previousFullscreen);
+      else if (document.fullscreenElement && !this.previousFullscreen) await document.exitFullscreen();
+    } catch {
+      this.message = 'Interface restaurada. Use os controles da janela para ajustar a tela.';
+    } finally {
+      this.wallpaperMode = false;
+      this.wallpaperBusy = false;
+      this.cdr.markForCheck();
+      const previous = this.wallpaperReturnFocus;
+      setTimeout(() => { if (previous?.isConnected) previous.focus(); });
+    }
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    if (!this.desktopMode && this.wallpaperMode && !document.fullscreenElement && !this.wallpaperBusy) {
+      void this.exitWallpaperMode();
+    }
   }
 
   private loadSecretUnlock(): void {
     try {
-      this.secretUnlocked = localStorage.getItem(this.secretUnlockKey) === '1';
-      if (this.secretUnlocked) this.secretCodeMessage = 'Arte Secreta já desbloqueada neste computador.';
+      const stored: unknown = JSON.parse(localStorage.getItem(this.secretUnlockKey) || '[]');
+      if (Array.isArray(stored)) {
+        this.unlockedSecretRewards = stored.filter((id): id is SecretRewardId => ['origin', 'rio', 'kiwi'].includes(String(id)));
+      }
+      // Migration is intentionally narrow: the old single unlock grants only
+      // the original edition, never the two new rewards.
+      if (!this.unlockedSecretRewards.length && localStorage.getItem(this.legacySecretUnlockKey) === '1') {
+        this.unlockedSecretRewards = ['origin'];
+        localStorage.setItem(this.secretUnlockKey, JSON.stringify(this.unlockedSecretRewards));
+      }
+      if (this.secretUnlocked) this.secretCodeMessage = `${this.unlockedSecretRewards.length} tema(s) secreto(s) guardado(s) neste computador.`;
     } catch {
-      this.secretUnlocked = false;
+      this.unlockedSecretRewards = [];
     }
   }
 
@@ -260,8 +553,26 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get validatedGamesCount(): number {
-    return Math.max(4, this.games.length);
+    return this.games.length;
   }
+
+  get filteredGames(): GameInfo[] {
+    const query = this.gameQuery.trim().toLocaleLowerCase('pt-BR');
+    return this.games.filter(g => (!query || g.display_name.toLocaleLowerCase('pt-BR').includes(query))
+      && (this.gameFilter !== 'installed' || g.installed)
+      && (this.gameFilter !== 'favorites' || this.favoriteGames.includes(g.id)))
+      .sort((a, b) => Number(b.running) - Number(a.running) || Number(this.favoriteGames.includes(b.id)) - Number(this.favoriteGames.includes(a.id)) || a.display_name.localeCompare(b.display_name));
+  }
+
+  toggleFavorite(id: string): void {
+    this.favoriteGames = this.favoriteGames.includes(id) ? this.favoriteGames.filter(x => x !== id) : [...this.favoriteGames, id];
+    try { localStorage.setItem('nexuflow_favorite_games_v17', JSON.stringify(this.favoriteGames)); }
+    catch { this.message = 'Favorito aplicado nesta sessão; não foi possível salvá-lo.'; }
+  }
+
+  trackGameId(_index: number, game: GameInfo): string { return game.id; }
+
+  preparePc(): void { this.setProfile('pc'); this.setTab('dashboard'); }
 
   openLearnMore(topic: LearnTopic): void {
     this.learnTopic = topic;
@@ -315,7 +626,7 @@ export class AppComponent implements OnInit, OnDestroy {
       uac: {
         title: 'Por que o Windows pede “Sim ou Não”?',
         intro: 'É a proteção UAC do Windows confirmando que o NexuFlow pode fazer ajustes administrativos reversíveis.',
-        does: ['Desde a 1.5.5, a autorização é solicitada uma vez ao abrir o aplicativo.', 'Enquanto o aplicativo permanecer aberto, ativar e desativar não deve repetir a pergunta.', 'O rollback continua funcionando com a mesma autorização.'],
+        does: ['A autorização aparece quando você liga uma otimização que realmente altera o Windows.', 'Enquanto o motor elevado permanecer ativo, desligar e restaurar não pede uma segunda confirmação.', 'A janela principal abre sem privilégios administrativos.'],
         doesNot: ['O NexuFlow não desliga nem contorna o UAC.', '“Fornecedor desconhecido” só desaparece quando o executável recebe uma assinatura digital comercial válida.', 'Cancelar a autorização impede os ajustes administrativos.']
       }
     };
@@ -505,7 +816,9 @@ export class AppComponent implements OnInit, OnDestroy {
       relic: 'Relíquia',
       tactical: 'Tático',
       operation: 'Operação',
-      secret: 'Arte Secreta'
+      secret: 'Edição Origem',
+      'secret-rio': 'Rio Pulse',
+      'secret-kiwi': 'Kiwi Signal'
     };
     return labels[this.uiTheme];
   }
@@ -516,7 +829,9 @@ export class AppComponent implements OnInit, OnDestroy {
       relic: 'icon-relic',
       tactical: 'icon-tactical',
       operation: 'icon-operation',
-      secret: 'icon-secret'
+      secret: 'icon-secret',
+      'secret-rio': 'icon-operation',
+      'secret-kiwi': 'icon-leaf'
     };
     return themedIcons[this.uiTheme] ?? 'icon-gamepad';
   }
@@ -531,14 +846,16 @@ export class AppComponent implements OnInit, OnDestroy {
       relic: 'icon-relic',
       tactical: 'icon-tactical',
       operation: 'icon-operation',
-      secret: 'icon-secret'
+      secret: 'icon-secret',
+      'secret-rio': 'icon-operation',
+      'secret-kiwi': 'icon-leaf'
     };
     return icons[this.uiTheme];
   }
 
   setTheme(theme: UiTheme): void {
-    if (theme === 'secret' && !this.secretUnlocked) {
-      this.message = 'A Arte Secreta precisa ser desbloqueada com um código.';
+    if (['secret', 'secret-rio', 'secret-kiwi'].includes(theme) && !this.isThemeUnlocked(theme)) {
+      this.message = 'Esse tema secreto exige o código próprio dele.';
       this.tab = 'redeem';
       this.cdr.markForCheck();
       return;
@@ -547,6 +864,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.applyUiPreferences();
     this.persistUiPreferences();
     this.cdr.markForCheck();
+  }
+
+  private isThemeUnlocked(theme: UiTheme): boolean {
+    const reward = this.secretRewards.find(candidate => candidate.theme === theme);
+    return !reward || this.unlockedSecretRewards.includes(reward.id);
   }
 
   setFontScale(value: number): void {
@@ -606,6 +928,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboard(event: KeyboardEvent): void {
+    if (this.wallpaperMode) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        void this.exitWallpaperMode();
+      }
+      return;
+    }
+    if (this.unlockCelebration) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.dismissUnlockCelebration();
+      }
+      return;
+    }
     if (event.key === 'Escape') {
       if (this.learnTopic) {
         this.closeLearnMore();
@@ -618,7 +954,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     if (!event.altKey) return;
-    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'investigator', '5': 'appearance', '6': 'settings', '7': 'redeem' };
+    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'investigator', '5': 'appearance', '6': 'settings', '7': 'redeem', '8': 'connection', '9': 'pc' };
     const tab = tabs[event.key];
     if (tab) {
       event.preventDefault();
@@ -633,7 +969,9 @@ export class AppComponent implements OnInit, OnDestroy {
       const raw = localStorage.getItem(this.uiPrefsKey);
       if (raw) {
         const prefs = JSON.parse(raw) as { theme?: UiTheme; fontScale?: number; reducedMotion?: boolean };
-        if (['nebula', 'midnight', 'emerald', 'high-contrast', 'blocks', 'relic', 'tactical', 'operation'].includes(String(prefs.theme)) || (prefs.theme === 'secret' && this.secretUnlocked)) {
+        const publicThemes = ['nebula', 'midnight', 'emerald', 'high-contrast', 'blocks', 'relic', 'tactical', 'operation'];
+        const secretThemes: UiTheme[] = ['secret', 'secret-rio', 'secret-kiwi'];
+        if (publicThemes.includes(String(prefs.theme)) || (secretThemes.includes(prefs.theme as UiTheme) && this.isThemeUnlocked(prefs.theme as UiTheme))) {
           this.uiTheme = prefs.theme as UiTheme;
         }
         this.fontScale = Math.min(125, Math.max(90, Number(prefs.fontScale) || 100));
@@ -672,25 +1010,51 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async toggleBoost(): Promise<void> {
     if (this.busy) return;
+    if (!this.boosted && this.updates.securityUpdateBlocking) {
+      this.message = 'BOOST bloqueado até concluir a correção crítica assinada.';
+      this.cdr.markForCheck();
+      return;
+    }
+    const wasBoosted = this.boosted;
     this.busy = true;
+    this.boostIntent = wasBoosted ? 'stopping' : 'starting';
+    this.boostStartedAt = Date.now();
     this.playEngageSound();
-    this.message = this.boosted ? 'Restaurando sistema…' : 'Analisando perfil, rede e proteção anticheat…';
+    this.message = wasBoosted ? 'Restaurando sistema…' : 'Analisando perfil, rede e proteção anticheat…';
     this.cdr.markForCheck();
 
     try {
-      const result = this.boosted
+      const result = wasBoosted
         ? await this.nexus.stopBoost(this.profile)
         : await this.nexus.startBoost(this.profile);
-      this.boosted = this.boosted ? !result.ok : result.ok;
+      this.boosted = wasBoosted ? !result.ok : result.ok;
       this.message = result.message;
-      await Promise.all([this.refreshTelemetry(), this.refreshGames(), this.refreshHealth()]);
-      if (!this.boosted) await this.refreshHistory();
+      this.busy = false;
+      this.boostIntent = 'idle';
+      this.cdr.markForCheck();
+      void this.refreshAfterBoost(this.boosted);
     } catch (error) {
       this.message = `Falha de comunicação: ${String(error)}`;
     } finally {
       this.busy = false;
+      this.boostIntent = 'idle';
       this.cdr.markForCheck();
     }
+  }
+
+  private async refreshAfterBoost(boostedAfterAction: boolean): Promise<void> {
+    await Promise.allSettled([this.refreshTelemetry(), this.refreshGames(), this.refreshHealth()]);
+    if (!boostedAfterAction) {
+      try { await this.refreshHistory(); } catch { /* The next periodic refresh can retry. */ }
+    }
+  }
+
+  async toggleSmartFlow(): Promise<void> {
+    if (!this.boosted) {
+      this.profile = 'complete';
+      try { localStorage.setItem(this.boostModeKey, this.profile); } catch { /* local preference only */ }
+    }
+    await this.toggleBoost();
   }
 
   async restoreAll(): Promise<void> {
@@ -757,7 +1121,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.telemetry = next;
     this.boosted = next.daemon_active;
     if (!next.engine_online && !this.busy) {
-      this.message = 'Engine offline. Inicie o app desktop ou a FastAPI de desenvolvimento.';
+      this.message = this.desktopMode
+        ? 'Motor indisponivel. Reinicie o NexuFlow; se continuar, reinstale a versao mais recente.'
+        : 'Previa do navegador: o motor nao roda aqui. Use npm run dev para abrir o aplicativo completo.';
     }
     this.push(this.pingSeries, next.ping_ms ?? 0);
     this.push(this.cpuSeries, next.cpu_percent);

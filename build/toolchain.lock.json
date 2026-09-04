@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "product": "NexuFlow 1.6.0",
+  "product": "NexuFlow 2.1.0-beta.1",
   "platform": "Windows x86_64",
   "node": "24.20.0",
   "npm": "11.19.0",
