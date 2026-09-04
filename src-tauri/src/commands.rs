@@ -254,6 +254,24 @@ pub async fn scan_driver_updates(app: AppHandle) -> Result<Value, String> {
 }
 
 #[tauri::command]
+pub async fn scan_connection(app: AppHandle) -> Result<Value, String> {
+    direct_engine(&app, &["--connection-scan-json"]).await
+}
+
+#[tauri::command]
+pub async fn rank_dns(app: AppHandle) -> Result<Value, String> {
+    direct_engine(&app, &["--dns-ranking-json"]).await
+}
+
+#[tauri::command]
+pub async fn open_pc_settings(app: AppHandle, section: String) -> Result<Value, String> {
+    if !["game_mode", "captures", "graphics", "startup", "storage", "power", "network"].contains(&section.as_str()) {
+        return Err("Destino de ajustes não permitido".into());
+    }
+    direct_engine(&app, &["--open-pc-settings", section.as_str()]).await
+}
+
+#[tauri::command]
 pub async fn open_driver_updates(app: AppHandle) -> Result<Value, String> {
     direct_engine(&app, &["--open-driver-updates-json"]).await
 }
@@ -301,12 +319,17 @@ pub async fn get_route_diagnostics(app: AppHandle, target: String) -> Result<Val
 }
 
 #[tauri::command]
-pub async fn start(app: AppHandle, profile: String) -> Result<Value, String> {
+pub async fn start(app: AppHandle, profile: String, desktop: State<'_, crate::desktop::DesktopState>) -> Result<Value, String> {
+    let _operation = desktop.operations.lock().await;
+    if desktop.exiting.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("NexuFlow está encerrando; aguarde a restauração.".into());
+    }
     privileged_job(&app, "start", &profile).await
 }
 
 #[tauri::command]
-pub async fn stop(app: AppHandle, _profile: String) -> Result<Value, String> {
+pub async fn stop(app: AppHandle, _profile: String, desktop: State<'_, crate::desktop::DesktopState>) -> Result<Value, String> {
+    let _operation = desktop.operations.lock().await;
     // Stopping only requests the already-elevated daemon to rollback and exit.
     // It cannot apply new privileged changes, so another UAC prompt is not
     // necessary or desirable.
@@ -314,17 +337,25 @@ pub async fn stop(app: AppHandle, _profile: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
-pub async fn restore(app: AppHandle, profile: String) -> Result<Value, String> {
+pub async fn restore(app: AppHandle, profile: String, desktop: State<'_, crate::desktop::DesktopState>) -> Result<Value, String> {
+    let _operation = desktop.operations.lock().await;
+    restore_engine(&app, &profile).await
+}
+
+pub async fn restore_engine(app: &AppHandle, profile: &str) -> Result<Value, String> {
     // Fast path: if the elevated daemon is still alive, ask it to perform its
     // own rollback with no second UAC prompt. A stale snapshot with no daemon
     // still requires Windows elevation because actual privileged restoration
     // may be necessary.
     let quick = direct_engine(&app, &["--stop-signal-json"]).await?;
+    if quick["data"]["stopped"].as_bool() != Some(true) {
+        return Err("O motor ainda está finalizando o rollback. Aguarde e tente novamente.".into());
+    }
     let pending = quick
         .get("data")
         .and_then(|value| value.get("restore_pending"))
         .and_then(Value::as_bool)
-        .unwrap_or(false);
+        .unwrap_or(true);
     if !pending {
         return Ok(json!({
             "ok": true,
@@ -333,5 +364,8 @@ pub async fn restore(app: AppHandle, profile: String) -> Result<Value, String> {
             "data": quick.get("data").cloned().unwrap_or(Value::Null)
         }));
     }
-    privileged_job(&app, "restore", &profile).await
+    let restored = privileged_job(&app, "restore", &profile).await?;
+    if restored["ok"].as_bool() != Some(true) { return Ok(restored); }
+    // Re-read the daemon and snapshot state instead of trusting a launch result.
+    direct_engine(&app, &["--stop-signal-json"]).await
 }

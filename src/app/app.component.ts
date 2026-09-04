@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonApp } from '@ionic/angular';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import {
   BoostProfile,
   DriverScanReport,
@@ -14,8 +15,9 @@ import {
   Telemetry
 } from './core/models';
 import { NexusService } from './core/nexus.service';
+import { PerformanceCenterComponent } from './performance-center.component';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem';
+type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem' | 'connection' | 'pc';
 type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret';
 type AppearanceSection = 'themes' | 'accessibility';
 type LearnTopic = 'ping' | 'pc' | 'complete' | 'hardcore_safe' | 'uac';
@@ -31,7 +33,7 @@ interface LearnMoreContent {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonApp],
+  imports: [CommonModule, FormsModule, IonApp, PerformanceCenterComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -43,6 +45,9 @@ export class AppComponent implements OnInit, OnDestroy {
   message = 'Pronto para otimizar';
   telemetry: Telemetry | null = null;
   games: GameInfo[] = [];
+  gameQuery = '';
+  gameFilter: 'all' | 'installed' | 'favorites' = 'all';
+  favoriteGames: string[] = [];
   history: SessionRecord[] = [];
   investigator: InvestigatorSnapshot | null = null;
   gamingHealth: GamingHealth = {};
@@ -62,12 +67,23 @@ export class AppComponent implements OnInit, OnDestroy {
   fontScale = 100;
   reducedMotion = false;
   accessibilityOpen = false;
+  wallpaperMode = false;
+  wallpaperBusy = false;
+  unlockCelebration = false;
+  secretAudioState: 'idle' | 'playing' | 'blocked' = 'idle';
+  private secretAudio: HTMLAudioElement | null = null;
+  private wallpaperReturnFocus: HTMLElement | null = null;
+  private previousFullscreen = false;
   appearanceSection: AppearanceSection = 'themes';
   secretUnlocked = false;
   secretCodeDraft = '';
+  secretCodeFormOpen = false;
+  secretCodeBusy = false;
   secretCodeMessage = 'Digite um código para revelar conteúdos cosméticos guardados neste computador.';
   learnTopic: LearnTopic | null = null;
   private timer?: ReturnType<typeof setInterval>;
+  private desktopUnlisten?: UnlistenFn;
+  private destroyed = false;
   private tick = 0;
   private readonly uiPrefsKey = 'nexuflow_ui_preferences_v1';
   private readonly secretUnlockKey = 'nexuflow_secret_art_unlocked_v1';
@@ -83,15 +99,31 @@ export class AppComponent implements OnInit, OnDestroy {
     this.loadSecretUnlock();
     this.loadUiPreferences();
     this.loadBoostMode();
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem('nexuflow_favorite_games_v17') || '[]');
+      if (Array.isArray(stored)) this.favoriteGames = stored.filter(x => typeof x === 'string').slice(0, 50);
+    } catch { /* Favorites are optional. */ }
   }
 
   async ngOnInit(): Promise<void> {
+    if (this.desktopMode) {
+      const unlisten = await listen<string>('desktop-status', event => {
+        this.message = event.payload;
+        if (this.wallpaperMode) void this.exitWallpaperMode();
+        this.cdr.markForCheck();
+      });
+      if (this.destroyed) { unlisten(); return; }
+      this.desktopUnlisten = unlisten;
+    }
     await this.checkCrashRecovery();
     await Promise.all([this.refreshTelemetry(), this.refreshGames(), this.refreshHealth(), this.refreshHistory()]);
-    this.timer = setInterval(() => void this.periodicRefresh(), 1000);
+    if (!this.destroyed) this.timer = setInterval(() => void this.periodicRefresh(), 1000);
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.stopSecretAudio();
+    this.desktopUnlisten?.();
     if (this.timer) clearInterval(this.timer);
   }
 
@@ -125,7 +157,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.tab = tab;
     if (tab === 'history') void this.refreshHistory();
     if (tab === 'investigator') void this.refreshInvestigator();
-    if (tab === 'settings') void this.refreshHealth();
+    if (tab === 'settings' || tab === 'pc') void this.refreshHealth();
     this.cdr.markForCheck();
     queueMicrotask(() => this.scrollToTop());
   }
@@ -136,21 +168,31 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async redeemSecretCode(): Promise<void> {
-    if (this.secretUnlocked) {
-      this.secretCodeMessage = 'A Arte Secreta já está desbloqueada neste computador.';
-      this.tab = 'appearance';
-      this.appearanceSection = 'themes';
+    if (this.secretCodeBusy) return;
+    const normalized = this.secretCodeDraft.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (normalized === 'RESETCODIGOS') {
+      try {
+        this.stopSecretAudio();
+        localStorage.removeItem(this.secretUnlockKey);
+        this.secretUnlocked = false;
+        this.unlockCelebration = false;
+        this.secretCodeDraft = '';
+        this.secretCodeFormOpen = false;
+        if (this.uiTheme === 'secret') this.setTheme('nebula');
+        this.secretCodeMessage = 'Resgates removidos. Você pode testar o código novamente.';
+      } catch {
+        this.secretCodeMessage = 'Não foi possível remover o resgate salvo. Tente novamente.';
+      }
       this.cdr.markForCheck();
       return;
     }
-
-    const normalized = this.secretCodeDraft.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!normalized) {
       this.secretCodeMessage = 'Digite o código antes de confirmar.';
       this.cdr.markForCheck();
       return;
     }
 
+    this.secretCodeBusy = true;
     try {
       const bytes = new TextEncoder().encode(normalized);
       const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -162,19 +204,130 @@ export class AppComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.secretUnlocked = true;
+      if (this.secretUnlocked) {
+        this.secretCodeDraft = '';
+        this.secretCodeMessage = 'Você já resgatou este código. Pode testar outro quando houver novidades.';
+        return;
+      }
       localStorage.setItem(this.secretUnlockKey, '1');
+      this.secretUnlocked = true;
+      this.secretCodeFormOpen = false;
       this.secretCodeDraft = '';
       this.secretCodeMessage = 'Arte Secreta desbloqueada! Ela já está ativa e disponível em Aparência.';
       this.uiTheme = 'secret';
       this.appearanceSection = 'themes';
       this.tab = 'appearance';
+      this.unlockCelebration = true;
       this.applyUiPreferences();
       this.persistUiPreferences();
+      void this.playSecretUnlockAudio();
+      setTimeout(() => document.getElementById('unlock-continue')?.focus());
     } catch {
       this.secretCodeMessage = 'Não foi possível validar o código neste ambiente.';
+    } finally {
+      this.secretCodeBusy = false;
+      this.cdr.markForCheck();
     }
+  }
+
+  openCodeForm(): void {
+    this.secretCodeFormOpen = !this.secretCodeFormOpen;
     this.cdr.markForCheck();
+    if (this.secretCodeFormOpen) setTimeout(() => document.getElementById('secret-code')?.focus());
+  }
+
+  get wallpaperArtwork(): string {
+    return this.uiTheme === 'secret' && this.secretUnlocked
+      ? 'theme-art/secret/nexuflow-secret-cover.jpg'
+      : 'theme-art/flux-mascot.png';
+  }
+
+  dismissUnlockCelebration(): void {
+    this.stopSecretAudio();
+    this.unlockCelebration = false;
+    this.cdr.markForCheck();
+    setTimeout(() => document.getElementById('secret-theme-tile')?.focus());
+  }
+
+  async playSecretUnlockAudio(): Promise<void> {
+    if (!this.unlockCelebration || !this.secretUnlocked) return;
+    this.stopSecretAudio();
+    const clip = new Audio('theme-art/secret/secret-unlock.mp3');
+    this.secretAudio = clip;
+    clip.volume = 0.7;
+    clip.loop = false;
+    clip.onended = () => {
+      if (this.secretAudio !== clip) return;
+      this.secretAudioState = 'idle';
+      this.cdr.markForCheck();
+    };
+    try {
+      await clip.play();
+      if (this.secretAudio === clip) this.secretAudioState = 'playing';
+    } catch {
+      // Autoplay or device failure must never undo a successful reward.
+      if (this.secretAudio === clip) this.secretAudioState = 'blocked';
+    }
+    if (!this.destroyed) this.cdr.markForCheck();
+  }
+
+  stopSecretAudio(): void {
+    if (this.secretAudio) {
+      this.secretAudio.onended = null;
+      this.secretAudio.pause();
+      this.secretAudio.currentTime = 0;
+      this.secretAudio = null;
+    }
+    this.secretAudioState = 'idle';
+  }
+
+  async enterWallpaperMode(): Promise<void> {
+    if (this.wallpaperBusy || this.wallpaperMode) return;
+    this.wallpaperBusy = true;
+    this.wallpaperReturnFocus = document.activeElement as HTMLElement | null;
+    this.wallpaperMode = true;
+    this.cdr.markForCheck();
+    try {
+      if (this.desktopMode) {
+        this.previousFullscreen = await this.nexus.setArtworkFullscreen(true);
+      } else if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        this.previousFullscreen = false;
+      } else {
+        this.previousFullscreen = !!document.fullscreenElement;
+      }
+    } catch {
+      // The clean artwork view still works if fullscreen is unavailable.
+      this.previousFullscreen = false;
+    } finally {
+      this.wallpaperBusy = false;
+      this.cdr.markForCheck();
+      setTimeout(() => document.getElementById('wallpaper-exit')?.focus());
+    }
+  }
+
+  async exitWallpaperMode(): Promise<void> {
+    if (this.wallpaperBusy || !this.wallpaperMode) return;
+    this.wallpaperBusy = true;
+    try {
+      if (this.desktopMode) await this.nexus.setArtworkFullscreen(this.previousFullscreen);
+      else if (document.fullscreenElement && !this.previousFullscreen) await document.exitFullscreen();
+    } catch {
+      this.message = 'Interface restaurada. Use os controles da janela para ajustar a tela.';
+    } finally {
+      this.wallpaperMode = false;
+      this.wallpaperBusy = false;
+      this.cdr.markForCheck();
+      const previous = this.wallpaperReturnFocus;
+      setTimeout(() => { if (previous?.isConnected) previous.focus(); });
+    }
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    if (!this.desktopMode && this.wallpaperMode && !document.fullscreenElement && !this.wallpaperBusy) {
+      void this.exitWallpaperMode();
+    }
   }
 
   private loadSecretUnlock(): void {
@@ -260,8 +413,26 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get validatedGamesCount(): number {
-    return Math.max(4, this.games.length);
+    return this.games.length;
   }
+
+  get filteredGames(): GameInfo[] {
+    const query = this.gameQuery.trim().toLocaleLowerCase('pt-BR');
+    return this.games.filter(g => (!query || g.display_name.toLocaleLowerCase('pt-BR').includes(query))
+      && (this.gameFilter !== 'installed' || g.installed)
+      && (this.gameFilter !== 'favorites' || this.favoriteGames.includes(g.id)))
+      .sort((a, b) => Number(b.running) - Number(a.running) || Number(this.favoriteGames.includes(b.id)) - Number(this.favoriteGames.includes(a.id)) || a.display_name.localeCompare(b.display_name));
+  }
+
+  toggleFavorite(id: string): void {
+    this.favoriteGames = this.favoriteGames.includes(id) ? this.favoriteGames.filter(x => x !== id) : [...this.favoriteGames, id];
+    try { localStorage.setItem('nexuflow_favorite_games_v17', JSON.stringify(this.favoriteGames)); }
+    catch { this.message = 'Favorito aplicado nesta sessão; não foi possível salvá-lo.'; }
+  }
+
+  trackGameId(_index: number, game: GameInfo): string { return game.id; }
+
+  preparePc(): void { this.setProfile('pc'); this.setTab('dashboard'); }
 
   openLearnMore(topic: LearnTopic): void {
     this.learnTopic = topic;
@@ -606,6 +777,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboard(event: KeyboardEvent): void {
+    if (this.wallpaperMode) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        void this.exitWallpaperMode();
+      }
+      return;
+    }
+    if (this.unlockCelebration) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.dismissUnlockCelebration();
+      }
+      return;
+    }
     if (event.key === 'Escape') {
       if (this.learnTopic) {
         this.closeLearnMore();
@@ -618,7 +803,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
     if (!event.altKey) return;
-    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'investigator', '5': 'appearance', '6': 'settings', '7': 'redeem' };
+    const tabs: Record<string, Tab> = { '1': 'dashboard', '2': 'games', '3': 'history', '4': 'investigator', '5': 'appearance', '6': 'settings', '7': 'redeem', '8': 'connection', '9': 'pc' };
     const tab = tabs[event.key];
     if (tab) {
       event.preventDefault();

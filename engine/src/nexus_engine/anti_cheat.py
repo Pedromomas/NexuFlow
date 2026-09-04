@@ -8,7 +8,9 @@ from .models import BoostProfile
 
 RIOT_GAME_IDS = frozenset({"valorant", "lol"})
 VALVE_GAME_IDS = frozenset({"cs2"})
-PROTECTED_GAME_IDS = RIOT_GAME_IDS | VALVE_GAME_IDS
+EAC_GAME_IDS = frozenset({"fortnite", "fallguys"})
+BATTLEYE_GAME_IDS = frozenset({"fortnite", "pubg", "rainbow6", "dayz", "arma3"})
+PROTECTED_GAME_IDS = RIOT_GAME_IDS | VALVE_GAME_IDS | EAC_GAME_IDS | BATTLEYE_GAME_IDS
 KNOWN_MUTABLE_GAME_IDS = frozenset({"roblox"})
 
 # Policy metadata is intentionally shipped in the engine so every transport
@@ -35,6 +37,18 @@ PROTECTED_PROCESS_TO_GAME = {
     "valorant-win64-shipping.exe": "valorant",
     "league of legends.exe": "lol",
     "cs2.exe": "cs2",
+    "fortniteclient-win64-shipping.exe": "fortnite",
+    "fortniteclient-win64-shipping_eac_eos.exe": "fortnite",
+    "fortniteclient-win64-shipping_be.exe": "fortnite",
+    "fallguys_client_game.exe": "fallguys",
+    "tslgame.exe": "pubg",
+    "rainbowsix.exe": "rainbow6",
+    "rainbowsix_vulkan.exe": "rainbow6",
+    "rainbowsix_dx11.exe": "rainbow6",
+    "dayz_x64.exe": "dayz",
+    "dayz.exe": "dayz",
+    "arma3_x64.exe": "arma3",
+    "arma3.exe": "arma3",
 }
 
 # Names only: no handles, modules, memory or sockets are inspected. Generic
@@ -373,7 +387,7 @@ def effective_profile(requested: BoostProfile, game_id: str | None) -> BoostProf
         return BoostProfile.RIOT_SAFE
     if gid in VALVE_GAME_IDS:
         return BoostProfile.VALVE_SAFE
-    if gid == "protected_runtime":
+    if gid == "protected_runtime" or gid in EAC_GAME_IDS | BATTLEYE_GAME_IDS:
         return BoostProfile.PROTECTED_SAFE
 
     # Unknown titles are never allowed to inherit a mutating profile. This is
@@ -408,7 +422,7 @@ def anti_cheat_policy_report(
     gid = normalize_game_id(game_id)
     riot = gid in RIOT_GAME_IDS
     valve = gid in VALVE_GAME_IDS
-    generic_protected = gid == "protected_runtime"
+    generic_protected = gid == "protected_runtime" or gid in EAC_GAME_IDS | BATTLEYE_GAME_IDS
     unknown = bool(gid) and gid not in (PROTECTED_GAME_IDS | KNOWN_MUTABLE_GAME_IDS | {"protected_runtime"})
     protected = riot or valve or generic_protected or unknown
     objective = boost_objective(requested)

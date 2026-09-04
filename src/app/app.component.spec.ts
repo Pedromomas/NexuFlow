@@ -1,8 +1,127 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('plays the local secret clip once per new reward, including after reset', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    app.secretCodeDraft = 'invalid'; await app.redeemSecretCode();
+    expect(play).not.toHaveBeenCalled();
+    app.secretCodeDraft = 'NEXU-SECRETO-157'; await app.redeemSecretCode();
+    expect(play).toHaveBeenCalledTimes(1);
+    const clip = play.mock.contexts[0] as HTMLMediaElement;
+    expect(clip.src).toContain('theme-art/secret/secret-unlock.mp3');
+    expect(clip.volume).toBe(0.7); expect(clip.loop).toBe(false);
+    app.dismissUnlockCelebration(); expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+    app.secretCodeDraft = 'NEXU-SECRETO-157'; await app.redeemSecretCode();
+    expect(play).toHaveBeenCalledTimes(1);
+    app.secretCodeDraft = 'RESET-CODIGOS'; await app.redeemSecretCode();
+    app.secretCodeDraft = 'NEXU-SECRETO-157'; await app.redeemSecretCode();
+    expect(play).toHaveBeenCalledTimes(2); fixture.destroy();
+  });
+
+  it('keeps the reward unlocked when automatic audio is blocked', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValue(new Error('NotAllowedError'));
+    app.secretCodeDraft = 'NEXU-SECRETO-157'; await app.redeemSecretCode();
+    expect(app.secretUnlocked).toBe(true); expect(app.unlockCelebration).toBe(true);
+    expect(app.secretAudioState).toBe('blocked');
+    fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('Tocar som do desbloqueio'); fixture.destroy();
+  });
+
+  it('filters games and persists favorites without losing stable row identity', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.games = [{id: 'fortnite', display_name: 'Fortnite', installed: false, running: false}, {id: 'roblox', display_name: 'Roblox', installed: true, running: true}];
+    app.toggleFavorite('fortnite'); app.gameFilter = 'favorites';
+    expect(app.filteredGames.map(g => g.id)).toEqual(['fortnite']);
+    expect(JSON.parse(localStorage.getItem('nexuflow_favorite_games_v17')!)).toEqual(['fortnite']);
+    expect(app.trackGameId(0, {...app.games[0]})).toBe('fortnite');
+    app.gameFilter = 'all'; app.gameQuery = 'ROB';
+    expect(app.filteredGames.map(g => g.id)).toEqual(['roblox']);
+    fixture.destroy();
+  });
+
+  it('prepares the PC objective without starting boost', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.preparePc(); expect(app.tab).toBe('dashboard'); expect(app.profile).toBe('pc'); expect(app.boosted).toBe(false);
+    fixture.destroy();
+  });
+
+  it('resets only code rewards, restores the mystery and allows another redemption', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.secretCodeDraft = 'NEXU-SECRETO-157';
+    await app.redeemSecretCode();
+    app.setFontScale(120);
+    app.profile = 'ping';
+    localStorage.setItem('nexuflow_api_token', 'keep-test-token');
+    app.setTab('redeem');
+    app.openCodeForm();
+    app.secretCodeDraft = 'invalid-code';
+    await app.redeemSecretCode();
+    expect(app.secretUnlocked).toBe(true);
+    expect(app.tab).toBe('redeem');
+    app.secretCodeDraft = 'RESET-CODIGOS';
+    await app.redeemSecretCode();
+    fixture.detectChanges();
+    expect(app.uiTheme).toBe('nebula');
+    expect(app.fontScale).toBe(120);
+    expect(app.profile).toBe('ping');
+    expect(localStorage.getItem('nexuflow_api_token')).toBe('keep-test-token');
+    expect(localStorage.getItem('nexuflow_secret_art_unlocked_v1')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.vault-cover')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.vault-mystery')).toBeTruthy();
+    app.secretCodeDraft = 'NEXU-SECRETO-157';
+    await app.redeemSecretCode();
+    fixture.detectChanges();
+    expect(app.secretUnlocked).toBe(true);
+    expect(fixture.nativeElement.querySelector('.flux-story')?.textContent).toContain('CONHEÇA O JOÃO');
+    fixture.destroy();
+  });
+
+  it('keeps artwork view usable when browser fullscreen is denied and exits with Escape', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    const previousRequest = Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen');
+    Object.defineProperty(document.documentElement, 'requestFullscreen', { configurable: true, value: vi.fn().mockRejectedValue(new Error('not allowed')) });
+    try {
+      app.tab = 'appearance';
+      app.boosted = true;
+      await app.enterWallpaperMode();
+      fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.shell.wallpaper-mode')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.wallpaper-art')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('#wallpaper-exit')).toBeTruthy();
+      app.handleKeyboard(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await Promise.resolve();
+      fixture.detectChanges();
+      expect(app.wallpaperMode).toBe(false);
+      expect(app.boosted).toBe(true);
+      expect(app.tab).toBe('appearance');
+    } finally {
+      if (previousRequest) Object.defineProperty(document.documentElement, 'requestFullscreen', previousRequest);
+      else delete (document.documentElement as Partial<HTMLElement>).requestFullscreen;
+      fixture.destroy();
+    }
+  });
   it('creates the NexuFlow shell', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
@@ -81,9 +200,18 @@ describe('AppComponent', () => {
 
     expect(fixture.componentInstance.secretUnlocked).toBe(true);
     expect(fixture.componentInstance.uiTheme).toBe('secret');
+    expect(fixture.componentInstance.unlockCelebration).toBe(true);
     expect(document.documentElement.dataset['theme']).toBe('secret');
     expect(fixture.nativeElement.querySelectorAll('.theme-tile').length).toBe(9);
     expect(fixture.nativeElement.querySelector('.theme-mascot')?.getAttribute('src')).toContain('nexuflow-secret-mascot.png');
+    expect(fixture.nativeElement.querySelector('.unlock-celebration')?.textContent).toContain('Arte Secreta');
+    fixture.componentInstance.dismissUnlockCelebration();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.unlock-celebration')).toBeNull();
+    await fixture.componentInstance.enterWallpaperMode();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.wallpaper-art')?.getAttribute('src')).toContain('nexuflow-secret-cover.jpg');
+    await fixture.componentInstance.exitWallpaperMode();
     expect(localStorage.getItem('nexuflow_secret_art_unlocked_v1')).toBe('1');
     fixture.componentInstance.setTheme('nebula');
     fixture.destroy();

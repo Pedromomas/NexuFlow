@@ -1,0 +1,19 @@
+﻿{
+    "schema":  1,
+    "product":  "NexuFlow 1.7.0",
+    "source_commit":  "a2baa362d4c9b0254f60d0f683d56e4625e2b075",
+    "source_dirty":  true,
+    "reproducibility":  {
+                            "source_archive":  "deterministic_sorted_files_normalized_timestamps",
+                            "installer":  "content_verified_not_yet_claimed_bit_reproducible"
+                        },
+    "toolchain_lock":  "build/toolchain.lock.json",
+    "verification":  [
+                         "tests",
+                         "anti_cheat_audit",
+                         "network_allowlist",
+                         "no_driver_contract",
+                         "sbom",
+                         "sha256_manifest"
+                     ]
+}

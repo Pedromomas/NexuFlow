@@ -9,7 +9,9 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão atual: 1.6.0 — Trust Edition**
+**Versão atual: 1.7.0 — Insight Edition**
+
+Central de Conexão com gráfico, scanner, histórico local e DNS Lab; Central do PC com leituras e atalhos seguros; catálogo com dez jogos, busca, favoritos e seis novos perfis EAC/BattlEye. Veja [as notas da 1.7](docs/RELEASE_1.7.md) e [a análise dos concorrentes](docs/COMPETITOR_REVIEW_1.7.md). Os recursos de aparência e bandeja da [1.6.1](docs/RELEASE_1.6.1.md) continuam disponíveis.
 
 </div>
 

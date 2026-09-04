@@ -21,7 +21,7 @@ Remove-Item (Join-Path $Root "engine\src\nexuflow_engine.egg-info") -Recurse -Fo
 
 & $Py -m pip install --upgrade pip
 & $Py -m pip install -e ".\engine[dev]"
-& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '1.6.0', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
+& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '1.7.0', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
 $PytestTemp = Join-Path $Root ".pytest-tmp"
 Remove-Item -Recurse -Force $PytestTemp -ErrorAction SilentlyContinue
 & $Py -m pytest .\engine\tests .\app\tests --basetemp="$PytestTemp" -q

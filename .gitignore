@@ -9,6 +9,8 @@ src-tauri/target/
 engine/.venv/
 engine/build/
 engine/dist/
+engine/build-v17/
+engine/dist-v17/
 engine/.pytest-*/
 engine/src/*.egg-info/
 release/

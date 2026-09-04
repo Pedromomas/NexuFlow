@@ -34,6 +34,8 @@ def network_contract() -> dict:
         "default": "deny",
         "local_api_origins": sorted(LOCAL_API_ORIGINS),
         "diagnostic_targets": sorted(DIAGNOSTIC_TARGETS),
+        "dns_benchmark_servers": ["1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4", "9.9.9.9", "149.112.112.112"],
+        "dns_benchmark_domains": ["example.com", "www.microsoft.com", "www.cloudflare.com"],
         "analytics": False,
         "advertising": False,
         "remote_commands": False,

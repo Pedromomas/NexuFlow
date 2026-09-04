@@ -75,6 +75,7 @@ def _running_processes() -> dict[str, list[dict]]:
 def discover_games(catalog: GameCatalog | None = None) -> list[dict]:
     catalog = catalog or GameCatalog.load()
     running = _running_processes()
+    steam_libraries = _steam_library_paths()
     result: list[dict] = []
     for game in catalog.games.values():
         hit = None
@@ -95,6 +96,11 @@ def discover_games(catalog: GameCatalog | None = None) -> list[dict]:
             installed_paths.extend(_expand_hint(hint))
         if game.id == "cs2":
             installed_paths.extend(_cs2_steam_candidates())
+        for relative in game.steam_paths:
+            for library in steam_libraries:
+                candidate = library / "steamapps" / "common" / relative
+                if candidate.is_file():
+                    installed_paths.append(candidate)
         unique: list[Path] = []
         for p in installed_paths:
             try:
@@ -116,6 +122,10 @@ def discover_games(catalog: GameCatalog | None = None) -> list[dict]:
             "running": hit is not None,
             "executable": executable,
             "pid": hit.get("pid") if hit else None,
+            "protection": game.protection,
+            "catalog_source": game.catalog_source,
+            "validation": "automated_policy" if is_protected_game(game.id) else "existing_catalog",
+            "live_match_validated": False,
         })
     return result
 

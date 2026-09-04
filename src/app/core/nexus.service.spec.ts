@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NexusService } from './nexus.service';
 
 describe('NexusService browser fallback', () => {
+  afterEach(() => vi.unstubAllGlobals());
   it('reports the engine as offline instead of fabricating PC telemetry', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline for this test')));
     TestBed.configureTestingModule({});
     const service = TestBed.inject(NexusService);
     const sample = await service.telemetry();

@@ -10,6 +10,8 @@ from pathlib import Path
 from nexus_engine.admin import ElevationError, is_admin, relaunch_elevated
 from nexus_engine import __version__
 from nexus_engine.hardware.driver_center import open_windows_driver_updates, scan_driver_updates
+from nexus_engine.hardware.pc_center import PC_SETTINGS, open_pc_settings
+from nexus_engine.network.connection_center import scan_connection, rank_dns
 from nexus_engine.catalog import GameCatalog
 from nexus_engine.daemon import run_daemon, stop_daemon, stop_daemon_unprivileged
 from nexus_engine.discovery import discover_games
@@ -118,6 +120,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--diagnostics-json", action="store_true")
     parser.add_argument("--gaming-health-json", action="store_true")
     parser.add_argument("--driver-scan-json", action="store_true")
+    parser.add_argument("--connection-scan-json", action="store_true")
+    parser.add_argument("--dns-ranking-json", action="store_true")
+    parser.add_argument("--open-pc-settings", choices=tuple(PC_SETTINGS))
     parser.add_argument("--open-driver-updates-json", action="store_true")
     parser.add_argument("--history-json", action="store_true")
     parser.add_argument("--investigator-json", action="store_true")
@@ -151,6 +156,12 @@ def main() -> None:
             emit(gaming_health_report(), args.output_file); return
         if args.driver_scan_json:
             emit(scan_driver_updates(), args.output_file); return
+        if args.connection_scan_json:
+            emit(scan_connection(), args.output_file); return
+        if args.dns_ranking_json:
+            emit(rank_dns(), args.output_file); return
+        if args.open_pc_settings:
+            emit(open_pc_settings(args.open_pc_settings), args.output_file); return
         if args.open_driver_updates_json:
             emit(open_windows_driver_updates(), args.output_file); return
         if args.history_json:

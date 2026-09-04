@@ -11,6 +11,7 @@
     },
     {
       "id": "valorant",
+      "protection": "Riot Safe • Vanguard",
       "display_name": "VALORANT",
       "process_names": ["VALORANT-Win64-Shipping.exe"],
       "install_hints": ["C:\\Riot Games\\VALORANT\\live\\ShooterGame\\Binaries\\Win64\\VALORANT-Win64-Shipping.exe"],
@@ -18,6 +19,7 @@
     },
     {
       "id": "cs2",
+      "protection": "Valve Safe • VAC",
       "display_name": "Counter-Strike 2",
       "process_names": ["cs2.exe"],
       "install_hints": ["C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64\\cs2.exe"],
@@ -25,10 +27,55 @@
     },
     {
       "id": "lol",
+      "protection": "Riot Safe • Vanguard",
       "display_name": "League of Legends",
       "process_names": ["League of Legends.exe"],
       "install_hints": ["C:\\Riot Games\\League of Legends\\Game\\League of Legends.exe"],
       "pools": []
+    },
+    {
+      "id": "fortnite", "display_name": "Fortnite",
+      "process_names": ["FortniteClient-Win64-Shipping.exe", "FortniteClient-Win64-Shipping_EAC_EOS.exe", "FortniteClient-Win64-Shipping_BE.exe"],
+      "install_hints": ["C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe"],
+      "protection": "Protected Safe • EAC / BattlEye",
+      "catalog_source": "https://www.battleye.com/", "pools": []
+    },
+    {
+      "id": "fallguys", "display_name": "Fall Guys",
+      "process_names": ["FallGuys_client_game.exe"],
+      "install_hints": ["C:\\Program Files\\Epic Games\\FallGuys\\FallGuys_client_game.exe"],
+      "steam_paths": ["Fall Guys/FallGuys_client_game.exe"],
+      "protection": "Protected Safe • Easy Anti-Cheat",
+      "catalog_source": "https://www.epicgames.com/help/c-37599050/a24092251", "pools": []
+    },
+    {
+      "id": "pubg", "display_name": "PUBG: BATTLEGROUNDS",
+      "process_names": ["TslGame.exe"], "install_hints": [],
+      "steam_paths": ["PUBG/TslGame/Binaries/Win64/TslGame.exe"],
+      "protection": "Protected Safe • BattlEye",
+      "catalog_source": "https://www.battleye.com/", "pools": []
+    },
+    {
+      "id": "rainbow6", "display_name": "Rainbow Six Siege",
+      "process_names": ["RainbowSix.exe", "RainbowSix_Vulkan.exe", "RainbowSix_DX11.exe"],
+      "install_hints": ["C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games\\Tom Clancy's Rainbow Six Siege\\RainbowSix.exe"],
+      "steam_paths": ["Tom Clancy's Rainbow Six Siege/RainbowSix.exe", "Tom Clancy's Rainbow Six Siege/RainbowSix_DX11.exe"],
+      "protection": "Protected Safe • BattlEye",
+      "catalog_source": "https://www.battleye.com/", "pools": []
+    },
+    {
+      "id": "dayz", "display_name": "DayZ",
+      "process_names": ["DayZ_x64.exe", "DayZ.exe"], "install_hints": [],
+      "steam_paths": ["DayZ/DayZ_x64.exe"],
+      "protection": "Protected Safe • BattlEye",
+      "catalog_source": "https://www.battleye.com/", "pools": []
+    },
+    {
+      "id": "arma3", "display_name": "Arma 3",
+      "process_names": ["arma3_x64.exe", "arma3.exe"], "install_hints": [],
+      "steam_paths": ["Arma 3/arma3_x64.exe", "Arma 3/arma3.exe"],
+      "protection": "Protected Safe • BattlEye",
+      "catalog_source": "https://www.battleye.com/", "pools": []
     }
   ]
 }

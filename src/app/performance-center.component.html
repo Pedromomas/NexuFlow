@@ -1,0 +1,50 @@
+<header class="topbar"><div><small>NEXUFLOW 1.7 • DIAGNÓSTICO LOCAL</small><h1>{{ mode === 'connection' ? 'Central de Conexão' : 'Central do PC' }}</h1></div><span class="confidence-chip">SAFE CORE</span></header>
+<p class="center-notice" role="status" aria-live="polite" *ngIf="notice">{{ notice }}</p>
+<ng-container *ngIf="mode === 'connection'">
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">MONITORAMENTO • ATÉ 2 MINUTOS</span><h2>{{ live ? 'Sua conexão, ao vivo' : 'Aguardando amostras recentes' }}</h2></div><span class="confidence-chip">{{ monitor?.target || 'SEM REFERÊNCIA' }}</span></div>
+    <p>Latência até uma referência de internet, não até o jogo. Lacunas são respostas ausentes; mudança de alvo reinicia o gráfico.</p>
+    <div class="center-metrics">
+      <div><small>MEDIANA</small><b>{{ live ? (monitor?.summary?.latency_ms ?? '—') : '—' }} <em>ms</em></b></div>
+      <div><small>JITTER</small><b>{{ live ? (monitor?.summary?.jitter_ms ?? '—') : '—' }} <em>ms</em></b></div>
+      <div><small>SEM RESPOSTA</small><b>{{ live ? (monitor?.summary?.packet_loss_percent ?? '—') : '—' }} <em>%</em></b></div>
+      <div><small>P95 / PICOS</small><b>{{ live ? (monitor?.summary?.p95_ms ?? '—') : '—' }} <em>ms / {{ live ? (monitor?.summary?.spikes ?? 0) : '—' }}</em></b></div>
+    </div>
+    <div class="center-chart" *ngIf="live; else waiting">
+      <div class="chart-caption"><span>0 – {{ graphMax | number:'1.0-1' }} ms</span><span>{{ monitor?.summary?.sample_count }} amostras • {{ monitor?.summary?.span_seconds }} s</span></div>
+      <svg viewBox="0 0 800 190" role="img" aria-label="Histórico de latência; marcas vermelhas indicam consultas sem resposta" preserveAspectRatio="none"><path class="chart-grid" d="M10 25H790M10 98H790M10 170H790"/><path *ngFor="let path of graphPaths" class="chart-line" [attr.d]="path"/><line *ngFor="let x of timeouts" class="chart-loss" [attr.x1]="x" [attr.x2]="x" y1="176" y2="188"/></svg>
+      <small>Pico = acima de 50 ms e de 2× a mediana. P95 = limite que abrange 95% das respostas. Amostra curta não é diagnóstico definitivo.</small>
+    </div>
+    <ng-template #waiting><div class="empty-state"><b>{{ telemetry?.engine_online ? 'O monitor ainda não reuniu dados recentes.' : 'Mecanismo offline' }}</b><span>Abra o aplicativo desktop. Dados antigos nunca aparecem como conexão saudável.</span></div></ng-template>
+  </section>
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">SCANNER DE CONEXÃO</span><h2>Compare antes de mexer</h2></div><button class="ghost" (click)="run('scan')" [disabled]="nexus.centerBusy || !telemetry?.engine_online">{{ nexus.centerBusy ? 'Medindo…' : 'Executar scanner' }}</button></div>
+    <p>Três destinos fixos, até 36 consultas. Sem mudar DNS, rotas, adaptadores ou arquivos do jogo.</p>
+    <ng-container *ngIf="scan as result">
+      <p class="center-verdict">{{ result.conclusion }}</p>
+      <div class="center-reference-grid"><article *ngFor="let row of result.results"><small>{{ row.name }} • {{ row.target }}</small><h3>{{ row.latency_ms ?? '—' }} <em>ms</em></h3><p>Jitter {{ row.jitter_ms ?? '—' }} ms • sem resposta {{ row.packet_loss_percent ?? '—' }}%</p><span>{{ compare(row.target) }}</span></article></div>
+      <small>{{ result.method }}</small>
+    </ng-container>
+    <div class="center-actions"><button class="ghost" (click)="exportReport()" [disabled]="!scan && !nexus.dnsRanking">Exportar relatório</button><button class="ghost" (click)="openSettings('network')">Abrir ajustes de rede</button></div>
+    <details class="center-history" *ngIf="nexus.connectionScans.length"><summary>Histórico local • últimos {{ nexus.connectionScans.length }} scans</summary><button class="ghost" *ngFor="let item of nexus.connectionScans; let i = index" (click)="selectedScan = i" [attr.aria-pressed]="selectedScan === i">{{ item.measured_at * 1000 | date:'dd/MM HH:mm:ss' }}{{ selectedScan === i ? ' • selecionado' : '' }}</button></details>
+  </section>
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">DNS LAB • SOMENTE LEITURA</span><h2>Resolução, sem adivinhação</h2></div><button class="ghost" (click)="run('dns')" [disabled]="nexus.centerBusy || !telemetry?.engine_online">Classificar DNS</button></div>
+    <p>O DNS encontra endereços. Ser mais rápido neste teste não significa diminuir o ping durante uma partida.</p>
+    <ng-container *ngIf="nexus.dnsRanking as dns">
+      <p class="center-verdict">{{ dns.recommendation ? 'Melhor pontuação elegível nesta medição: ' + dns.recommendation : 'Nenhum provedor com respostas suficientes para recomendar.' }} • {{ dns.measured_at * 1000 | date:'HH:mm:ss' }}</p>
+      <div class="center-dns-row" *ngFor="let row of dns.results; let i = index"><b>{{ i + 1 }}. {{ row.provider }}</b><span>{{ row.servers.join(' / ') }}</span><strong>{{ row.median_ms ?? '—' }} ms</strong><small>{{ row.successful }}/{{ row.samples }} respostas{{ row.eligible ? '' : ' • inconclusivo' }}</small></div>
+      <p>{{ dns.note }}</p><small>{{ dns.method }}</small>
+    </ng-container>
+  </section>
+</ng-container>
+<ng-container *ngIf="mode === 'pc'">
+  <section class="panel glass center-panel">
+    <div class="section-title"><div><span class="eyebrow">PREPARAÇÃO PARA JOGAR</span><h2>Saiba o que merece atenção</h2></div><button class="ghost" (click)="refresh.emit()">Atualizar leituras</button></div>
+    <p>Sem porcentagem fictícia de otimização. Estas leituras ajudam a decidir o próximo passo; não são uma promessa de FPS.</p>
+    <div class="center-pc-grid"><article *ngFor="let card of pcCards" [class.needs-attention]="card.attention"><small>{{ card.attention ? 'ATENÇÃO À LEITURA' : 'REVISÃO SEGURA' }}</small><h3>{{ card.title }}</h3><b>{{ card.status }}</b><p>{{ card.description }}</p><button class="ghost" (click)="openSettings(card.section)">{{ card.action }}</button></article></div>
+    <div class="center-actions"><button class="ghost" (click)="preparePc.emit()">Preparar perfil PC</button><button class="ghost" (click)="openSettings('storage')">Revisar armazenamento</button></div>
+    <p class="center-verdict">Preparar perfil só seleciona o modo; você ativa o BOOST no Dashboard. Em jogos protegidos, os limites do anticheat continuam valendo.</p>
+    <small>Atalhos abrem páginas oficiais do Windows. Nenhuma alteração é feita automaticamente; ajustes feitos nessas páginas não entram no rollback do NexuFlow. Disponibilidade varia com a versão do Windows.</small>
+  </section>
+</ng-container>
