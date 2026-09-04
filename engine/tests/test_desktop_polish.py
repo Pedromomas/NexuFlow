@@ -14,9 +14,13 @@ def test_release_tauri_host_is_window_subsystem():
 
 def test_packaged_engine_is_windowless():
     build_script = (ROOT / "scripts" / "build-engine.ps1").read_text(encoding="utf-8")
-    spec = (ROOT / "nexus-engine.spec").read_text(encoding="utf-8")
+    release_workflow = (ROOT / ".github" / "workflows" / "release-signed.yml").read_text(
+        encoding="utf-8"
+    )
     assert "--windowed" in build_script
-    assert "console=False" in spec
+    assert "--console" not in build_script
+    assert "--windowed" in release_workflow
+    assert "--console" not in release_workflow
 
 
 def test_stop_channel_is_one_way_user_control_path():
