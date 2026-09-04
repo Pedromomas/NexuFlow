@@ -9,9 +9,9 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão em validação: 2.1.0-beta.1 — Portas Abertas**
+**Versão em validação: 2.1.0-beta.2 — Portas Abertas**
 
-Safe Core obrigatório e independente da automação, Central do PC redesenhada, três universos secretos, DNS comparativo ao vivo, speed test limitado e central de atualizações preparada para assinatura. Veja [o marco 2.1 beta](docs/RELEASE_2.1_BETA.md), [a auditoria de segurança](docs/SECURITY_AUDIT_2.1.md) e [as notas da 1.8](docs/RELEASE_1.8.md).
+Safe Core obrigatório e independente da automação, entrada transparente com conta opcional, Central do PC redesenhada, três universos secretos completos, DNS comparativo ao vivo, speed test limitado e canal de atualização assinado. Veja [o marco 2.1 beta](docs/RELEASE_2.1_BETA.md), [a auditoria de segurança](docs/SECURITY_AUDIT_2.1.md) e [as notas da 1.8](docs/RELEASE_1.8.md).
 
 </div>
 
