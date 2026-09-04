@@ -7,10 +7,29 @@ import { EngineResponse } from './core/models';
 describe('AppComponent', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    sessionStorage.setItem('nexuflow_entry_complete_v1', '1');
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   });
   afterEach(() => vi.restoreAllMocks());
+
+  it('offers a complete first-run choice without making an account mandatory', async () => {
+    sessionStorage.removeItem('nexuflow_entry_complete_v1');
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Seu PC mais leve.');
+    expect(text).toContain('Continuar com o Safe Core');
+    expect(text).toContain('Contas online em preparação');
+    expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
+    fixture.componentInstance.continueFree();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.entry-gate')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sidebar')).toBeTruthy();
+    fixture.destroy();
+  });
 
   it('plays the local secret clip once per new reward, including after reset', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
@@ -48,12 +67,18 @@ describe('AppComponent', () => {
     expect(app.unlockedSecretRewards).toEqual(['origin', 'rio']);
     expect(app.uiTheme).toBe('secret-rio');
     expect(app.unlockReward.animationClass).toBe('unlock-rio');
+    expect(app.unlockReward.panelArtwork).toContain('rio-pulse-beacon-panel-2.1.png');
+    expect(app.themeSignatureIcon).toBe('icon-rio-pulse');
+    expect(app.themedNavigationIcon('connection')).toBe('icon-rio-wave');
     app.dismissUnlockCelebration();
 
     app.secretCodeDraft = 'NEXU-KIWI-021'; await app.redeemSecretCode();
     expect(app.unlockedSecretRewards).toEqual(['origin', 'rio', 'kiwi']);
     expect(app.uiTheme).toBe('secret-kiwi');
     expect(app.unlockReward.animationClass).toBe('unlock-kiwi');
+    expect(app.unlockReward.panelArtwork).toContain('kiwi-signal-relic-panel-2.1.png');
+    expect(app.themeSignatureIcon).toBe('icon-kiwi-signal');
+    expect(app.themedNavigationIcon('pc')).toBe('icon-kiwi-leaf');
     expect(JSON.parse(localStorage.getItem('nexuflow_secret_rewards_v2') || '[]')).toEqual(['origin', 'rio', 'kiwi']);
     fixture.destroy();
   });

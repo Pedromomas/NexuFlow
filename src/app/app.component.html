@@ -1,5 +1,5 @@
 <ion-app>
-<main class="shell" [class.boosted]="boosted" [class.wallpaper-mode]="wallpaperMode">
+<main class="shell" [class.boosted]="boosted" [class.wallpaper-mode]="wallpaperMode" [class.entry-locked]="entryGateVisible">
   <svg class="svg-sprite" aria-hidden="true">
     <symbol id="icon-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></symbol>
     <symbol id="icon-gamepad" viewBox="0 0 24 24"><path d="M8.4 7h7.2a5 5 0 0 1 4.8 3.6l1.1 3.8a3.4 3.4 0 0 1-5.8 3.2L14 16h-4l-1.7 1.6a3.4 3.4 0 0 1-5.8-3.2l1.1-3.8A5 5 0 0 1 8.4 7Z"></path><path d="M7 10v4M5 12h4"></path><circle cx="16.5" cy="11" r=".8" fill="currentColor" stroke="none"></circle><circle cx="18.5" cy="13" r=".8" fill="currentColor" stroke="none"></circle></symbol>
@@ -18,9 +18,54 @@
     <symbol id="icon-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none"></path></symbol>
     <symbol id="icon-key" viewBox="0 0 24 24"><circle cx="8.5" cy="15.5" r="4.5"></circle><path d="m12 12 8-8m-3 3 3 3m-6 0 2 2"></path></symbol>
     <symbol id="icon-secret" viewBox="0 0 24 24"><path d="m12 2 2.2 6.2L21 10l-5.2 4.1.2 6.9-4-2.4L8 21l.2-6.9L3 10l6.8-1.8L12 2Z"></path><path d="m10 10 2-1.5L14 10l-2 4-2-4Z"></path></symbol>
+    <symbol id="icon-origin-portal" viewBox="0 0 24 24"><path d="M12 2 20 7v10l-8 5-8-5V7l8-5Z"></path><path d="m9 8 6 4-6 4V8Z"></path><path d="M4 12h3m10 0h3"></path></symbol>
+    <symbol id="icon-origin-prism" viewBox="0 0 24 24"><path d="m12 3 8 15H4L12 3Z"></path><path d="m12 3 2 15m-2-7-8 7m10 0 6 0"></path></symbol>
+    <symbol id="icon-rio-pulse" viewBox="0 0 24 24"><path d="M3 16h3l2-7 3 10 3-13 3 10h4"></path><path d="M4 21h16"></path></symbol>
+    <symbol id="icon-rio-wave" viewBox="0 0 24 24"><path d="M3 8c3-3 6 3 9 0s6 3 9 0M3 14c3-3 6 3 9 0s6 3 9 0M3 20c3-3 6 3 9 0s6 3 9 0"></path></symbol>
+    <symbol id="icon-rio-beacon" viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M10 16h4"></path><path d="M8 7a6 6 0 0 0 0 8m8-8a6 6 0 0 1 0 8M5 4a10 10 0 0 0 0 16m14-16a10 10 0 0 1 0 16"></path></symbol>
+    <symbol id="icon-kiwi-signal" viewBox="0 0 24 24"><path d="M6 14c0-5 4-9 9-9 3 0 5 2 5 5 0 5-4 9-9 9-3 0-5-2-5-5Z"></path><path d="m6 13-3-2m3 4-3 2m9-7c1.8 1 2.8 2.5 3 4.5"></path><circle cx="16" cy="9" r="1" fill="currentColor" stroke="none"></circle></symbol>
+    <symbol id="icon-kiwi-seed" viewBox="0 0 24 24"><path d="M12 2c4 5 7 8 7 12a7 7 0 0 1-14 0c0-4 3-7 7-12Z"></path><path d="M9 14c1 1 2 1.5 3 1.5S14 15 15 14"></path></symbol>
+    <symbol id="icon-kiwi-leaf" viewBox="0 0 24 24"><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-7 10-16Z"></path><path d="M4 21c3-6 7-9 13-12M8 16c3-1 5-1 8 0"></path></symbol>
     <symbol id="icon-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></symbol>
   </svg>
   <a class="skip-link" href="#app-content">Pular para o conteúdo</a>
+
+  <section class="entry-gate" *ngIf="entryGateVisible" aria-labelledby="entry-title">
+    <div class="entry-access">
+      <div class="entry-brand"><span class="entry-logo"><svg viewBox="0 0 24 24"><use href="#icon-origin-portal"></use></svg></span><div><strong>NEXU<span>FLOW</span></strong><small>SAFE PERFORMANCE</small></div></div>
+      <div class="entry-kicker"><i></i> ACESSO SEGURO E TRANSPARENTE</div>
+      <h1 id="entry-title">Seu PC mais leve.<br>Sua conexão mais clara.</h1>
+      <p class="entry-lead">Entre para sincronizar recursos avançados ou comece agora com o Safe Core gratuito. O NexuFlow nunca inventa uma conta local nem envia sua senha sem um servidor HTTPS configurado.</p>
+
+      <div class="entry-mode" role="tablist" aria-label="Acesso à conta">
+        <button type="button" role="tab" [attr.aria-selected]="entryMode === 'login'" [class.active]="entryMode === 'login'" (click)="setEntryMode('login')">Entrar</button>
+        <button type="button" role="tab" [attr.aria-selected]="entryMode === 'register'" [class.active]="entryMode === 'register'" (click)="setEntryMode('register')">Criar conta</button>
+      </div>
+
+      <form class="entry-form" (ngSubmit)="submitEntryAccount()" *ngIf="account.configured; else accountPreparing">
+        <label *ngIf="entryMode === 'register'">Como podemos chamar você?<input [(ngModel)]="entryName" name="entryName" type="text" autocomplete="name" minlength="2" maxlength="50" required placeholder="Seu nome"></label>
+        <label>E-mail<input [(ngModel)]="entryEmail" name="entryEmail" type="email" autocomplete="email" maxlength="254" required placeholder="voce@email.com"></label>
+        <label>Senha<input [(ngModel)]="entryPassword" name="entryPassword" type="password" [attr.autocomplete]="entryMode === 'register' ? 'new-password' : 'current-password'" minlength="10" maxlength="128" required placeholder="Mínimo de 10 caracteres"></label>
+        <label class="entry-consent" *ngIf="entryMode === 'register'"><input [(ngModel)]="entryAcceptedTerms" name="entryAcceptedTerms" type="checkbox"><span>Li e aceito os <a [href]="account.termsUrl" target="_blank" rel="noopener noreferrer">Termos</a> e a <a [href]="account.privacyPolicyUrl" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>.</span></label>
+        <button class="entry-primary" type="submit" [disabled]="account.state === 'busy'">{{ account.state === 'busy' ? 'Protegendo conexão…' : entryMode === 'register' ? 'Criar conta segura' : 'Entrar na conta' }}</button>
+      </form>
+      <ng-template #accountPreparing>
+        <div class="entry-preparing"><svg viewBox="0 0 24 24"><use href="#icon-origin-portal"></use></svg><div><b>Contas online em preparação</b><span>O servidor, os termos e a política pública ainda não foram publicados. Cadastro e pagamento permanecem bloqueados para não criar uma falsa sensação de segurança.</span></div></div>
+      </ng-template>
+
+      <div class="entry-message" [class.error]="account.state === 'error'" aria-live="polite">{{ account.message }}</div>
+      <button class="entry-free" type="button" (click)="continueFree()"><span>Continuar com o Safe Core</span><b>GRÁTIS PARA SEMPRE →</b></button>
+      <small class="entry-footnote">Sem cartão • sem conta obrigatória • otimizações locais com rollback</small>
+    </div>
+
+    <div class="entry-showcase" aria-hidden="true">
+      <img src="theme-art/secret/origin-core-panel-2.1.png" alt="" decoding="async">
+      <div class="entry-grid"></div><div class="entry-orbit entry-orbit-a"></div><div class="entry-orbit entry-orbit-b"></div>
+      <div class="entry-showcase-copy"><span>FLUXO VIVO • 2.1</span><h2>Jogue primeiro.<br>Conta depois.</h2><p>Diagnóstico, proteção de sessão e desempenho explicados em linguagem simples.</p><div><b>01</b> Assinatura obrigatória nas atualizações</div><div><b>02</b> Nada invasivo durante partida protegida</div><div><b>03</b> Snapshot e rollback nas mudanças do PC</div></div>
+    </div>
+  </section>
+
+  <ng-container *ngIf="!entryGateVisible">
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
   <div class="noise"></div>
@@ -35,10 +80,11 @@
     <div class="unlock-burst" aria-hidden="true"></div>
     <div class="unlock-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <section class="unlock-reward-card">
-      <div class="unlock-emblem"><svg viewBox="0 0 24 24"><use href="#icon-secret"></use></svg></div>
+      <div class="unlock-emblem"><svg viewBox="0 0 24 24"><use [attr.href]="'#' + unlockReward.icon"></use></svg></div>
       <span>{{ unlockReward.eyebrow }}</span>
       <h2 id="unlock-title">{{ unlockReward.title }}</h2>
       <p>{{ unlockReward.message }}</p>
+      <img class="unlock-artifact-preview" [src]="unlockReward.panelArtwork" alt="" decoding="async">
       <button id="unlock-continue" type="button" (click)="dismissUnlockCelebration()">Ver recompensa <b>→</b></button>
       <button class="unlock-audio-control" type="button" *ngIf="secretAudioState === 'playing'" (click)="stopSecretAudio()">Silenciar som</button>
       <button class="unlock-audio-control" type="button" *ngIf="secretAudioState === 'blocked'" (click)="playSecretUnlockAudio()">Tocar som do desbloqueio</button>
@@ -90,7 +136,7 @@
   <aside class="sidebar glass">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <span *ngIf="isSecretTheme" class="secret-brand-crop"><img class="secret-brand-image" [src]="themeArtwork" alt=""></span>
+        <span *ngIf="isSecretTheme" class="secret-brand-crop"><svg class="secret-brand-image" viewBox="0 0 24 24"><use [attr.href]="'#' + themeSignatureIcon"></use></svg></span>
         <svg *ngIf="!isSecretTheme" class="brand-core" viewBox="0 0 48 48"><path class="brand-frame" d="M14 7h20l7 7v20l-7 7H14l-7-7V14l7-7Z"></path><path class="brand-flow" d="M15 33V16l18 17V16"></path><path class="brand-pulse" d="m20 24 4-5 4 10 4-5"></path><circle cx="15" cy="16" r="2"></circle><circle cx="33" cy="33" r="2"></circle></svg>
         <svg class="brand-signature" viewBox="0 0 24 24"><use [attr.href]="'#' + themeSignatureIcon"></use></svg>
       </span>
@@ -98,16 +144,16 @@
     </div>
 
     <nav aria-label="Navegação principal">
-      <button aria-label="Dashboard" title="Dashboard" [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span class="nav-label">Dashboard</span></button>
+      <button aria-label="Dashboard" title="Dashboard" [class.active]="tab === 'dashboard'" (click)="setTab('dashboard')"><svg class="nav-icon"><use [attr.href]="'#' + themedNavigationIcon('dashboard')"></use></svg><span class="nav-label">Dashboard</span></button>
       <button aria-label="Jogos" title="Jogos" [class.active]="tab === 'games'" (click)="setTab('games')"><svg class="nav-icon"><use [attr.href]="'#' + gamesNavigationIcon"></use></svg><span class="nav-label">Jogos</span></button>
-      <button aria-label="Conexão" title="Conexão" [class.active]="tab === 'connection'" (click)="setTab('connection')"><svg class="nav-icon"><use href="#icon-investigator"></use></svg><span class="nav-label">Conexão</span></button>
-      <button aria-label="Central do PC" title="Central do PC" [class.active]="tab === 'pc'" (click)="setTab('pc')"><svg class="nav-icon"><use href="#icon-lightning"></use></svg><span class="nav-label">Central do PC</span></button>
+      <button aria-label="Conexão" title="Conexão" [class.active]="tab === 'connection'" (click)="setTab('connection')"><svg class="nav-icon"><use [attr.href]="'#' + themedNavigationIcon('connection')"></use></svg><span class="nav-label">Conexão</span></button>
+      <button aria-label="Central do PC" title="Central do PC" [class.active]="tab === 'pc'" (click)="setTab('pc')"><svg class="nav-icon"><use [attr.href]="'#' + themedNavigationIcon('pc')"></use></svg><span class="nav-label">Central do PC</span></button>
       <button aria-label="Histórico" title="Histórico" [class.active]="tab === 'history'" (click)="setTab('history')"><svg class="nav-icon"><use href="#icon-history"></use></svg><span class="nav-label">Histórico</span></button>
       <button aria-label="Investigador" title="Investigador" [class.active]="tab === 'investigator'" (click)="setTab('investigator')"><svg class="nav-icon"><use href="#icon-investigator"></use></svg><span class="nav-label">Investigador</span></button>
-      <button aria-label="Aparência" title="Aparência" [class.active]="tab === 'appearance'" (click)="setTab('appearance')"><svg class="nav-icon"><use href="#icon-palette"></use></svg><span class="nav-label">Aparência</span></button>
+      <button aria-label="Aparência" title="Aparência" [class.active]="tab === 'appearance'" (click)="setTab('appearance')"><svg class="nav-icon"><use [attr.href]="'#' + themedNavigationIcon('appearance')"></use></svg><span class="nav-label">Aparência</span></button>
       <button aria-label="Ajustes" title="Ajustes" [class.active]="tab === 'settings'" (click)="setTab('settings')"><svg class="nav-icon"><use href="#icon-sliders"></use></svg><span class="nav-label">Ajustes</span></button>
       <button aria-label="Conta e assinatura" title="Conta e assinatura" [class.active]="tab === 'account'" (click)="setTab('account')"><svg class="nav-icon"><use href="#icon-account"></use></svg><span class="nav-label">Conta</span></button>
-      <button aria-label="Código secreto" title="Código secreto" class="redeem-nav" [class.active]="tab === 'redeem'" [class.unlocked]="secretUnlocked" (click)="setTab('redeem')"><svg class="nav-icon"><use href="#icon-key"></use></svg><span class="nav-label">Código secreto</span><i *ngIf="secretUnlocked" aria-label="Desbloqueado"></i></button>
+      <button aria-label="Código secreto" title="Código secreto" class="redeem-nav" [class.active]="tab === 'redeem'" [class.unlocked]="secretUnlocked" (click)="setTab('redeem')"><svg class="nav-icon"><use [attr.href]="'#' + themedNavigationIcon('redeem')"></use></svg><span class="nav-label">Código secreto</span><i *ngIf="secretUnlocked" aria-label="Desbloqueado"></i></button>
     </nav>
 
     <div class="sidebar-foot">
@@ -317,7 +363,7 @@
 
         <div class="flux-story" [class.joao-story]="isSecretTheme">
           <div><span class="eyebrow">{{ themeStory.eyebrow }}</span><h3>{{ themeStory.title }}</h3><p>{{ themeStory.copy }}</p></div>
-          <img [src]="isSecretTheme ? themeArtwork : 'theme-art/flux-mascot.png'" [alt]="themeStory.alt" width="1600" height="900" loading="lazy" decoding="async">
+          <img [src]="isSecretTheme ? themePanelArtwork : 'theme-art/flux-mascot.png'" [alt]="themeStory.alt" width="1600" height="900" loading="lazy" decoding="async">
         </div>
       </div>
 
@@ -515,5 +561,6 @@
       </div>
     </section>
   </section>
+  </ng-container>
 </main>
 </ion-app>

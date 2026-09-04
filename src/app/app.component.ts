@@ -19,6 +19,7 @@ import { PerformanceCenterComponent } from './performance-center.component';
 import { UpdateService } from './core/update.service';
 import { SubscriptionService } from './core/subscription.service';
 import { AccountCenterComponent } from './account-center.component';
+import { AccountService } from './core/account.service';
 
 type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem' | 'connection' | 'pc' | 'account';
 type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret' | 'secret-rio' | 'secret-kiwi';
@@ -42,6 +43,8 @@ interface SecretReward {
   eyebrow: string;
   message: string;
   artwork: string;
+  panelArtwork: string;
+  icon: string;
   animationClass: string;
 }
 
@@ -53,6 +56,12 @@ interface SecretReward {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent implements OnInit, OnDestroy {
+  entryGateVisible = this.shouldShowEntryGate();
+  entryMode: 'login' | 'register' = 'login';
+  entryName = '';
+  entryEmail = '';
+  entryPassword = '';
+  entryAcceptedTerms = false;
   tab: Tab = 'dashboard';
   profile: BoostProfile = 'complete';
   boosted = false;
@@ -113,28 +122,34 @@ export class AppComponent implements OnInit, OnDestroy {
       digest: 'cc4a2c7e4588853f351cdb6b3fb919a7118280aa2d76aa4921b84fa7acfeb529',
       title: 'Edição Origem', eyebrow: 'ARTE SECRETA DESBLOQUEADA',
       message: 'Portal, código e prisma chegaram à sua galeria.',
-      artwork: 'theme-art/secret/nexuflow-secret-origin-2.1.webp', animationClass: 'unlock-origin'
+      artwork: 'theme-art/secret/nexuflow-secret-origin-2.1.webp',
+      panelArtwork: 'theme-art/secret/origin-core-panel-2.1.png',
+      icon: 'icon-origin-portal', animationClass: 'unlock-origin'
     },
     {
       id: 'rio', theme: 'secret-rio',
       digest: '2bf18b00500f5322ce14ad30946d028d5adb6c03eacb6f1f6edbd5252f7a9054',
       title: 'Rio Pulse', eyebrow: 'SINAL SECRETO CAPTURADO',
       message: 'A cidade acendeu em azul, vermelho e chuva digital.',
-      artwork: 'theme-art/secret/nexuflow-secret-rio-2.1.webp', animationClass: 'unlock-rio'
+      artwork: 'theme-art/secret/nexuflow-secret-rio-2.1.webp',
+      panelArtwork: 'theme-art/secret/rio-pulse-beacon-panel-2.1.png',
+      icon: 'icon-rio-pulse', animationClass: 'unlock-rio'
     },
     {
       id: 'kiwi', theme: 'secret-kiwi',
       digest: '2111aa7fb6416e6edf2ba8fe475a7f91d10e82b816fff950e1f16d4cbe23df15',
       title: 'Kiwi Signal', eyebrow: 'GUARDIÃO ENCONTRADO',
       message: 'O pequeno guardião despertou a floresta de sinais.',
-      artwork: 'theme-art/secret/nexuflow-secret-kiwi-2.1.webp', animationClass: 'unlock-kiwi'
+      artwork: 'theme-art/secret/nexuflow-secret-kiwi-2.1.webp',
+      panelArtwork: 'theme-art/secret/kiwi-signal-relic-panel-2.1.png',
+      icon: 'icon-kiwi-signal', animationClass: 'unlock-kiwi'
     }
   ];
   private readonly boostModeKey = 'nexuflow_boost_mode_v155';
   private readonly legacyBoostModeKey = 'nexuflow_boost_mode_v150';
   private readonly olderBoostModeKey = 'nexuflow_boost_mode_v142';
 
-  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef, public readonly updates: UpdateService, public readonly subscription: SubscriptionService) {
+  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef, public readonly updates: UpdateService, public readonly subscription: SubscriptionService, public readonly account: AccountService) {
     this.apiTokenDraft = this.nexus.getStoredApiToken();
     this.transport = this.nexus.transportLabel();
     this.desktopMode = this.nexus.isDesktop();
@@ -148,6 +163,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    await this.account.initialize();
     if (this.desktopMode) {
       const unlisten = await listen<string>('desktop-status', event => {
         this.message = event.payload;
@@ -165,6 +181,49 @@ export class AppComponent implements OnInit, OnDestroy {
     void this.updates.checkWhenSafe(this.protectedGameActive, this.boosted);
     await Promise.all([this.refreshGames(), this.refreshHealth(), this.refreshHistory()]);
     if (!this.destroyed) this.timer = setInterval(() => void this.periodicRefresh(), 1000);
+  }
+
+  setEntryMode(mode: 'login' | 'register'): void {
+    this.entryMode = mode;
+    this.entryPassword = '';
+    this.cdr.markForCheck();
+  }
+
+  continueFree(): void {
+    try { sessionStorage.setItem('nexuflow_entry_complete_v1', '1'); }
+    catch { /* Hardened webviews may deny storage; the current session still opens. */ }
+    this.entryGateVisible = false;
+    this.message = 'Safe Core gratuito iniciado. Conta continua opcional.';
+    this.cdr.markForCheck();
+  }
+
+  private shouldShowEntryGate(): boolean {
+    try { return sessionStorage.getItem('nexuflow_entry_complete_v1') !== '1'; }
+    catch { return true; }
+  }
+
+  openAccountFromEntry(mode: 'login' | 'register'): void {
+    this.setEntryMode(mode);
+    this.continueFree();
+    this.setTab('account');
+  }
+
+  async submitEntryAccount(): Promise<void> {
+    if (!this.account.configured || this.account.state === 'busy') return;
+    try {
+      if (this.entryMode === 'register') {
+        if (!this.entryAcceptedTerms) throw new Error('Aceite os termos e a política de privacidade para criar a conta.');
+        await this.account.register(this.entryName, this.entryEmail, this.entryPassword);
+      } else {
+        await this.account.login(this.entryEmail, this.entryPassword);
+      }
+      this.entryPassword = '';
+      if (this.account.authenticated) this.continueFree();
+    } catch (error) {
+      this.account.state = 'error';
+      this.account.message = error instanceof Error ? error.message : 'Não foi possível continuar.';
+    }
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {
@@ -348,6 +407,11 @@ export class AppComponent implements OnInit, OnDestroy {
       'secret-kiwi': 'theme-art/secret/nexuflow-secret-kiwi-2.1.webp'
     };
     return artwork[this.uiTheme] ?? 'theme-art/flux-mascot.png';
+  }
+
+  get themePanelArtwork(): string {
+    if (!this.isSecretTheme) return 'theme-art/flux-mascot.png';
+    return this.secretRewards.find(reward => reward.theme === this.uiTheme)?.panelArtwork ?? this.themeArtwork;
   }
 
   get themeStory(): {eyebrow: string; title: string; copy: string; alt: string} {
@@ -836,6 +900,18 @@ export class AppComponent implements OnInit, OnDestroy {
     return themedIcons[this.uiTheme] ?? 'icon-gamepad';
   }
 
+  themedNavigationIcon(kind: 'dashboard' | 'connection' | 'pc' | 'appearance' | 'redeem'): string {
+    const normal: Record<typeof kind, string> = {
+      dashboard: 'icon-dashboard', connection: 'icon-investigator', pc: 'icon-lightning', appearance: 'icon-palette', redeem: 'icon-key'
+    };
+    const secretIcons: Partial<Record<Extract<UiTheme, 'secret' | 'secret-rio' | 'secret-kiwi'>, Record<typeof kind, string>>> = {
+      secret: { dashboard: 'icon-origin-portal', connection: 'icon-origin-prism', pc: 'icon-origin-prism', appearance: 'icon-origin-portal', redeem: 'icon-origin-prism' },
+      'secret-rio': { dashboard: 'icon-rio-pulse', connection: 'icon-rio-wave', pc: 'icon-rio-beacon', appearance: 'icon-rio-pulse', redeem: 'icon-rio-beacon' },
+      'secret-kiwi': { dashboard: 'icon-kiwi-signal', connection: 'icon-kiwi-seed', pc: 'icon-kiwi-leaf', appearance: 'icon-kiwi-signal', redeem: 'icon-kiwi-seed' }
+    };
+    return secretIcons[this.uiTheme as Extract<UiTheme, 'secret' | 'secret-rio' | 'secret-kiwi'>]?.[kind] ?? normal[kind];
+  }
+
   get themeSignatureIcon(): string {
     const icons: Record<UiTheme, string> = {
       nebula: 'icon-orbit',
@@ -846,9 +922,9 @@ export class AppComponent implements OnInit, OnDestroy {
       relic: 'icon-relic',
       tactical: 'icon-tactical',
       operation: 'icon-operation',
-      secret: 'icon-secret',
-      'secret-rio': 'icon-operation',
-      'secret-kiwi': 'icon-leaf'
+      secret: 'icon-origin-portal',
+      'secret-rio': 'icon-rio-pulse',
+      'secret-kiwi': 'icon-kiwi-signal'
     };
     return icons[this.uiTheme];
   }
