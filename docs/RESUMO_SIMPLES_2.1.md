@@ -1,6 +1,6 @@
 # NexuFlow — documentação resumida
 
-Versão atual de testes: **2.1.0-beta.1 — Portas Abertas**
+Versão atual de testes: **2.1.0-beta.2 — Portas Abertas**
 
 ## O que é o NexuFlow
 
@@ -124,9 +124,19 @@ A atualização automática pública ainda depende da chave definitiva, do GitHu
 - imagens convertidas para WebP para reduzir o peso;
 - temas continuam totalmente cosméticos e não alteram o funcionamento do BOOST.
 
+Na beta.2, cada coleção também recebeu uma segunda arte própria, símbolo da marca e ícones exclusivos. A interface deixa de reutilizar a mesma identidade visual entre os três códigos.
+
+### Entrada, login e cadastro
+
+- nova tela de boas-vindas inspirada em produtos gamer, mas com visual e arte originais do NexuFlow;
+- oferece Entrar, Criar conta e Continuar com o Safe Core;
+- Safe Core permanece gratuito e não exige conta;
+- cadastro e login só são habilitados quando backend HTTPS, Termos e Política de Privacidade estiverem configurados;
+- enquanto essa infraestrutura externa não existe, nenhum cadastro falso é gravado localmente e nenhuma senha é enviada.
+
 ### Melhorias gerais
 
-- versão atualizada para 2.1.0-beta.1;
+- versão atualizada para 2.1.0-beta.2;
 - projeto do VS Code configurado para ignorar pastas pesadas de compilação;
 - código-fonte empacotado sem caches e arquivos temporários;
 - novo instalador e novo pacote de código-fonte gerados;
@@ -137,4 +147,3 @@ A atualização automática pública ainda depende da chave definitiva, do GitHu
 Esta versão pode ser usada para testes locais. Antes de uma distribuição comercial ainda são necessários assinatura digital Authenticode, canal oficial de atualização, testes em instalações limpas do Windows e validação presencial com jogos protegidos atuais.
 
 Pagamento, contas, assinatura e trial ainda não foram implementados como sistema real. Essas funções dependem de backend, Mercado Pago, domínio, política de privacidade e testes próprios de segurança.
-
