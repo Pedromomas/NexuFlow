@@ -46,6 +46,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        billing_enabled = os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() == "true"
         origins = tuple(
             item.strip().rstrip("/")
             for item in os.environ.get("ALLOWED_ORIGINS", "https://tauri.localhost,http://tauri.localhost").split(",")
@@ -58,9 +59,9 @@ class Settings:
             firebase_project_id=_required("FIREBASE_PROJECT_ID"),
             firebase_web_api_key=_required("FIREBASE_WEB_API_KEY"),
             public_api_base=_https_url("PUBLIC_API_BASE"),
-            public_app_return_url=_https_url("PUBLIC_APP_RETURN_URL"),
-            mercado_pago_access_token=_required("MERCADO_PAGO_ACCESS_TOKEN") if os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() == "true" else "",
-            mercado_pago_webhook_secret=_required("MERCADO_PAGO_WEBHOOK_SECRET") if os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() == "true" else "",
+            public_app_return_url=_https_url("PUBLIC_APP_RETURN_URL") if billing_enabled else "",
+            mercado_pago_access_token=_required("MERCADO_PAGO_ACCESS_TOKEN") if billing_enabled else "",
+            mercado_pago_webhook_secret=_required("MERCADO_PAGO_WEBHOOK_SECRET") if billing_enabled else "",
             mercado_pago_live_mode=os.environ.get("MERCADO_PAGO_LIVE_MODE", "false").lower() == "true",
             code_hash_pepper=_secret_bytes("CODE_HASH_PEPPER"),
             license_private_key=private_key,
