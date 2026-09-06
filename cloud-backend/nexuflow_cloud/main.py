@@ -92,6 +92,8 @@ async def deployment_gate(request: Request, call_next):
     # A first deployment must not expose unfinished account/payment integrations.
     if request.url.path.startswith("/v1/") and os.getenv("NEXUFLOW_API_ENABLED", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"detail": "Servico em configuracao. Tente novamente mais tarde."})
+    if request.url.path.startswith(("/v1/billing/", "/v1/webhooks/")) and os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() != "true":
+        return JSONResponse(status_code=503, content={"detail": "Pagamentos ainda nao disponiveis."})
     return await call_next(request)
 
 

@@ -59,11 +59,10 @@ class Settings:
             firebase_web_api_key=_required("FIREBASE_WEB_API_KEY"),
             public_api_base=_https_url("PUBLIC_API_BASE"),
             public_app_return_url=_https_url("PUBLIC_APP_RETURN_URL"),
-            mercado_pago_access_token=_required("MERCADO_PAGO_ACCESS_TOKEN"),
-            mercado_pago_webhook_secret=_required("MERCADO_PAGO_WEBHOOK_SECRET"),
+            mercado_pago_access_token=_required("MERCADO_PAGO_ACCESS_TOKEN") if os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() == "true" else "",
+            mercado_pago_webhook_secret=_required("MERCADO_PAGO_WEBHOOK_SECRET") if os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() == "true" else "",
             mercado_pago_live_mode=os.environ.get("MERCADO_PAGO_LIVE_MODE", "false").lower() == "true",
             code_hash_pepper=_secret_bytes("CODE_HASH_PEPPER"),
             license_private_key=private_key,
             allowed_origins=origins,
         )
-
