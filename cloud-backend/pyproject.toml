@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=75,<83"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["nexuflow_cloud*"]
+
+[project]
+name = "nexuflow-cloud"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.141.1,<0.142",
+  "uvicorn>=0.52.0,<0.53",
+  "httpx>=0.28.1,<0.29",
+  "firebase-admin>=7.1.0,<8",
+  "cryptography>=46,<51",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=9,<10"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
