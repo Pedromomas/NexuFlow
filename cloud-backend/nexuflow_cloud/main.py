@@ -253,6 +253,20 @@ async def password_reset(body: ResetBody, request: Request) -> dict[str, str]:
     return await gateway.reset_password(body.email)
 
 
+@app.post("/v1/auth/verify-email")
+async def resend_verification(authorization: Annotated[str | None, Header()] = None,
+                              claims: dict[str, Any] = Depends(bearer_claims)):
+    gateway = services()
+    if claims.get("email_verified"):
+        return {"message": "Seu e-mail já está confirmado."}
+    gateway.rate_limit("verify-email", claims["uid"], limit=3, window_seconds=3600)
+    # Only the authenticated user's token determines the recipient.
+    await gateway._identity("sendOobCode", {
+        "requestType": "VERIFY_EMAIL", "idToken": authorization.removeprefix("Bearer ").strip(),
+    })
+    return {"message": "Confirmação enviada. Confira sua caixa de entrada e spam."}
+
+
 @app.post("/v1/auth/refresh")
 async def refresh(body: RefreshBody, request: Request) -> dict[str, Any]:
     gateway = services()
