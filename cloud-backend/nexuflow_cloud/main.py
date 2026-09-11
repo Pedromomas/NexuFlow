@@ -9,13 +9,14 @@ from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
 from .config import Settings
 from .admin import require_admin_claims, make_code_document
 from .security import opaque_hash, sign_license, verify_mp_webhook
 from .services import CloudServices
+from .pagbank import SandboxGateway, verify_notification
 
 
 class RegisterBody(BaseModel):
@@ -92,7 +93,10 @@ async def deployment_gate(request: Request, call_next):
     # A first deployment must not expose unfinished account/payment integrations.
     if request.url.path.startswith("/v1/") and os.getenv("NEXUFLOW_API_ENABLED", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"detail": "Servico em configuracao. Tente novamente mais tarde."})
-    if request.url.path.startswith(("/v1/billing/", "/v1/webhooks/")) and os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() != "true":
+    sandbox_path = request.url.path.startswith("/v1/admin/pagbank/") or request.url.path == "/v1/webhooks/pagbank"
+    if sandbox_path and os.getenv("NEXUFLOW_PAGBANK_SANDBOX_ENABLED", "false") != "true":
+        return JSONResponse(status_code=503, content={"detail": "Testes PagBank ainda não disponíveis."})
+    if not sandbox_path and request.url.path.startswith(("/v1/billing/", "/v1/webhooks/")) and os.getenv("NEXUFLOW_BILLING_ENABLED", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"detail": "Pagamentos ainda nao disponiveis."})
     return await call_next(request)
 
@@ -175,6 +179,57 @@ def admin_create_code(body: AdminCodeBody, claims: dict[str, Any] = Depends(admi
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {"ok": True, "service": "nexuflow-cloud", "version": app.version}
+
+
+def pagbank_sandbox() -> SandboxGateway:
+    gateway = services()
+    try:
+        return SandboxGateway(gateway.http, gateway.db,
+            os.getenv("PAGBANK_ACCESS_TOKEN", ""), os.getenv("PAGBANK_ENVIRONMENT", "sandbox"),
+            settings().public_api_base)
+    except ValueError as exc:
+        raise HTTPException(503, "PagBank de testes não configurado.") from exc
+
+
+@app.get("/billing/return", response_class=HTMLResponse)
+def billing_return():
+    return """<!doctype html><html lang="pt-BR"><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NexuFlow — Pagamento</title><main><h1>Volte ao NexuFlow</h1>
+    <p>Esta página não confirma o pagamento. A confirmação depende da consulta ao PagBank.</p>
+    <p>Compras no ambiente de testes não liberam uma assinatura real.</p></main></html>"""
+
+
+@app.post("/v1/admin/pagbank/checkout")
+async def sandbox_checkout(body: CheckoutBody, claims: dict[str, Any] = Depends(admin_claims)):
+    services().rate_limit("sandbox-checkout", claims["uid"], limit=5, window_seconds=900)
+    try:
+        return await pagbank_sandbox().create(claims["uid"], body.plan)
+    except ValueError as exc:
+        raise HTTPException(400, "Checkout de testes inválido.") from exc
+
+
+@app.post("/v1/webhooks/pagbank")
+async def pagbank_webhook(request: Request):
+    import json
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw) > 262144:
+            raise HTTPException(413, "Notificação muito grande.")
+    if not verify_notification(raw_body=bytes(raw),
+            signature=request.headers.get("x-authenticity-token"),
+            token=os.getenv("PAGBANK_ACCESS_TOKEN", "")):
+        raise HTTPException(401, "Notificação não autenticada.")
+    try:
+        data = json.loads(raw)
+        provider_id = data["id"]
+        if not isinstance(provider_id, str):
+            raise ValueError()
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(400, "Notificação inválida.") from exc
+    await pagbank_sandbox().reconcile(provider_id)
+    return {"ok": True}
 
 
 @app.post("/v1/auth/register", status_code=201)
