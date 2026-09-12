@@ -11,6 +11,8 @@ from nexuflow_cloud import main
 @pytest.fixture
 def api(monkeypatch):
     monkeypatch.setenv('NEXUFLOW_API_ENABLED', 'true')
+    monkeypatch.setenv('NEXUFLOW_REGISTRATION_ENABLED', 'true')
+    monkeypatch.setenv('NEXUFLOW_PUBLISHED_LEGAL_VERSION', 'test-1')
     gateway = MagicMock()
     gateway.verify_token.return_value = {'uid': 'admin-1', 'admin': True,
         'email_verified': True, 'auth_time': int(time.time())}
@@ -25,6 +27,27 @@ def api(monkeypatch):
     return TestClient(main.app), gateway
 
 
+def test_registration_is_independent_of_existing_account_login(api, monkeypatch):
+    client, gateway = api
+    monkeypatch.delenv('NEXUFLOW_REGISTRATION_ENABLED', raising=False)
+    body = {'displayName': 'Local', 'email': 'test@example.com', 'password': 'test-only-password'}
+    for path in ['/v1/auth/register', '/v1/auth/register/']:
+        assert client.post(path, json=body).status_code == 503
+    gateway.register.assert_not_called()
+    assert client.post('/v1/auth/login', json=body).status_code == 200
+    gateway.login.assert_awaited_once()
+
+
+def test_registration_requires_current_explicit_acceptance(api, monkeypatch):
+    client, gateway = api
+    body = {'displayName': 'Local', 'email': 'test@example.com', 'password': 'test-only-password'}
+    assert client.post('/v1/auth/register', json=body).status_code == 409
+    assert client.post('/v1/auth/register', json={**body, 'acceptedTerms': True, 'legalVersion': 'old'}).status_code == 409
+    monkeypatch.setenv('NEXUFLOW_PUBLISHED_LEGAL_VERSION', 'draft-1')
+    assert client.post('/v1/auth/register', json={**body, 'acceptedTerms': True, 'legalVersion': 'draft-1'}).status_code == 503
+    gateway.register.assert_not_awaited()
+
+
 def test_initial_deployment_is_closed_without_credentials(monkeypatch):
     monkeypatch.delenv('NEXUFLOW_API_ENABLED', raising=False)
     gateway = MagicMock()
@@ -33,6 +56,19 @@ def test_initial_deployment_is_closed_without_credentials(monkeypatch):
     assert client.get('/health').status_code == 200
     for path in ['/v1/auth/login', '/v1/admin/codes', '/v1/license']:
         assert client.post(path, json={}).status_code == 503
+
+
+def test_revoke_code_requires_admin_and_passes_code_only_in_body(api):
+    client, gateway = api
+    gateway.revoke_unused_code.return_value = {'revoked': True}
+    body = {'code': 'NEXU-TEST-ONLY-12345'}
+    assert client.post('/v1/admin/codes/revoke', json=body).status_code == 401
+    gateway.revoke_unused_code.assert_not_called()
+    headers = {'Authorization': 'Bearer token'}
+    assert client.post('/v1/admin/codes/revoke', json=body, headers=headers).status_code == 200
+    gateway.revoke_unused_code.assert_called_once_with('admin-1', body['code'])
+    gateway.verify_token.return_value = {'uid': 'ordinary', 'email_verified': True, 'auth_time': int(time.time())}
+    assert client.post('/v1/admin/codes/revoke', json=body, headers=headers).status_code == 403
     assert client.get('/openapi.json').status_code == 404
     gateway.assert_not_called()
 
@@ -79,7 +115,7 @@ def test_bad_duration_is_rejected_before_creating_document(api):
 
 def test_register_login_reset_use_service_and_rate_limit(api):
     client, gateway = api
-    assert client.post('/v1/auth/register', json={'displayName': 'Local', 'email': 'test@example.com', 'password': 'test-only-password'}).status_code == 201
+    assert client.post('/v1/auth/register', json={'displayName': 'Local', 'email': 'test@example.com', 'password': 'test-only-password', 'acceptedTerms': True, 'legalVersion': 'test-1'}).status_code == 201
     assert client.post('/v1/auth/login', json={'email': 'test@example.com', 'password': 'test-only-password'}).status_code == 200
     assert client.post('/v1/auth/password-reset', json={'email': 'test@example.com'}).status_code == 200
     assert gateway.rate_limit.call_count == 3
@@ -149,3 +185,20 @@ def test_return_does_not_activate_a_subscription(api):
     client, gateway = api
     assert client.get('/billing/return?status=approved').status_code == 200
     gateway.db.collection.assert_not_called()
+
+
+def test_verification_requires_login_and_uses_own_token(api):
+    client, gateway = api
+    gateway._identity = AsyncMock(return_value={})
+    assert client.post('/v1/auth/verify-email').status_code == 401
+    gateway.verify_token.return_value = {'uid': 'user', 'email_verified': False}
+    assert client.post('/v1/auth/verify-email', headers={'Authorization': 'Bearer test-token'}).status_code == 200
+    gateway._identity.assert_awaited_once_with('sendOobCode', {'requestType': 'VERIFY_EMAIL', 'idToken': 'test-token'})
+    gateway.rate_limit.assert_called_once_with('verify-email', 'user', limit=3, window_seconds=3600)
+
+
+def test_verified_user_does_not_send_again(api):
+    client, gateway = api
+    gateway._identity = AsyncMock()
+    assert client.post('/v1/auth/verify-email', headers={'Authorization': 'Bearer token'}).status_code == 200
+    gateway._identity.assert_not_awaited()

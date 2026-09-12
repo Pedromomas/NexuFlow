@@ -1,9 +1,25 @@
 import unittest
 from datetime import UTC, datetime, timedelta
-from nexuflow_cloud.codes import redemption_updates
+from nexuflow_cloud.codes import redemption_updates, unused_code_revocation
 
 
 class CodeTests(unittest.TestCase):
+    def test_revocation_preserves_original_record_and_blocks_redemption(self):
+        now = datetime(2026, 9, 12, tzinfo=UTC)
+        original = {'durationDays': 7, 'createdBy': 'admin-original'}
+        update = unused_code_revocation(original, 'admin', now)
+        self.assertEqual(original, {'durationDays': 7, 'createdBy': 'admin-original'})
+        self.assertEqual(update, {'revoked': True, 'revokedBy': 'admin', 'revokedAt': now})
+        self.assertEqual(unused_code_revocation(original | update, 'other', now), {})
+        with self.assertRaises(ValueError):
+            redemption_updates(original | update, {}, 'user', now)
+
+    def test_used_or_deleted_account_codes_require_separate_review(self):
+        now = datetime(2026, 9, 12, tzinfo=UTC)
+        for record in ({'usedAt': now}, {'usedBy': 'u'}, {'deletedAccountHash': 'hash'}):
+            with self.assertRaises(ValueError):
+                unused_code_revocation(record, 'admin', now)
+
     def setUp(self):
         self.now = datetime(2026, 9, 5, tzinfo=UTC)
         self.code = {'durationDays': 7, 'rewards': []}

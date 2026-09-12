@@ -10,7 +10,7 @@ import httpx
 from fastapi import HTTPException
 
 from .config import Settings
-from .codes import redemption_updates
+from .codes import redemption_updates, unused_code_revocation
 from .security import normalize_email, opaque_hash
 
 
@@ -47,7 +47,7 @@ class CloudServices:
             raise HTTPException(status_code=400, detail="Não foi possível concluir a autenticação com esses dados.")
         return response.json()
 
-    async def register(self, display_name: str, email: str, password: str) -> dict[str, str]:
+    async def register(self, display_name: str, email: str, password: str, *, legal_version: str = '') -> dict[str, str]:
         email = normalize_email(email)
         name = display_name.strip()
         if not 2 <= len(name) <= 50 or not 10 <= len(password) <= 128:
@@ -55,10 +55,10 @@ class CloudServices:
         result = await self._identity("signUp", {"email": email, "password": password, "returnSecureToken": True})
         uid = result["localId"]
         self.auth.update_user(uid, display_name=name)
-        await self._identity("sendOobCode", {"requestType": "VERIFY_EMAIL", "idToken": result["idToken"]})
         now = datetime.now(UTC)
         self.db.collection("profiles").document(uid).set({
             "displayName": name,
+            "legalAcceptance": {"version": legal_version, "acceptedAt": now},
             "email": email,
             "plan": "free",
             "subscriptionStatus": "trial",
@@ -69,6 +69,12 @@ class CloudServices:
             "createdAt": now,
             "updatedAt": now,
         }, merge=True)
+        try:
+            await self._identity("sendOobCode", {"requestType": "VERIFY_EMAIL", "idToken": result["idToken"]})
+        except (HTTPException, httpx.HTTPError):
+            # Sign-up already succeeded. Do not invite a duplicate sign-up or
+            # claim the message was delivered when the mail request failed.
+            return {"message": "Conta criada, mas não foi possível enviar a confirmação agora. Entre na conta e use Enviar confirmação de e-mail."}
         return {"message": "Conta criada. Confira seu e-mail para confirmar o cadastro."}
 
     async def login(self, email: str, password: str) -> dict[str, Any]:
@@ -136,7 +142,7 @@ class CloudServices:
 
     def profile(self, uid: str) -> dict[str, Any]:
         user = self.auth.get_user(uid)
-        if user.email:
+        if user.email and user.email_verified:
             self._accept_duo_if_available(uid, user.email)
         ref = self.db.collection("profiles").document(uid)
         snapshot = ref.get()
@@ -160,7 +166,7 @@ class CloudServices:
         if status == "active" and isinstance(paid_end, datetime) and paid_end <= now:
             status = "cancelled"
         duo_owner_uid = data.get("duoOwnerUid")
-        if duo_owner_uid:
+        if duo_owner_uid and user.email_verified:
             owner_data = self.db.collection("profiles").document(str(duo_owner_uid)).get().to_dict() or {}
             owner_status = owner_data.get("subscriptionStatus", "free")
             owner_end = owner_data.get("subscriptionEndsAt")
@@ -334,6 +340,25 @@ class CloudServices:
             txn.set(order_ref, {"status": "approved", "paymentId": str(payment.get("id")), "approvedAt": now}, merge=True)
 
         activate(transaction)
+
+    def revoke_unused_code(self, admin_uid: str, code: str) -> dict[str, bool]:
+        from google.cloud import firestore as google_firestore
+        code_id = opaque_hash(code.strip().upper(), self.settings.code_hash_pepper)
+        ref = self.db.collection('accessCodes').document(code_id)
+
+        @google_firestore.transactional
+        def revoke(txn):
+            snapshot = ref.get(transaction=txn)
+            if not snapshot.exists:
+                raise HTTPException(404, 'Código não encontrado.')
+            try:
+                update = unused_code_revocation(snapshot.to_dict() or {}, admin_uid, datetime.now(UTC))
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
+            if update:
+                txn.set(ref, update, merge=True)
+        revoke(self.db.transaction())
+        return {'revoked': True}
 
     def redeem_code(self, uid: str, code: str) -> dict[str, Any]:
         from google.cloud import firestore as google_firestore

@@ -17,12 +17,15 @@ from .admin import require_admin_claims, make_code_document
 from .security import opaque_hash, sign_license, verify_mp_webhook
 from .services import CloudServices
 from .pagbank import SandboxGateway, verify_notification
+from .legal import router as legal_router
 
 
 class RegisterBody(BaseModel):
     displayName: str = Field(min_length=2, max_length=50)
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=10, max_length=128)
+    acceptedTerms: bool = Field(default=False, strict=True)
+    legalVersion: str = Field(default='', max_length=80)
 
 
 class LoginBody(BaseModel):
@@ -86,6 +89,7 @@ app = FastAPI(
     openapi_url=None,
     lifespan=lifespan,
 )
+app.include_router(legal_router)
 
 
 @app.middleware("http")
@@ -93,6 +97,8 @@ async def deployment_gate(request: Request, call_next):
     # A first deployment must not expose unfinished account/payment integrations.
     if request.url.path.startswith("/v1/") and os.getenv("NEXUFLOW_API_ENABLED", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"detail": "Servico em configuracao. Tente novamente mais tarde."})
+    if request.url.path.rstrip('/') == "/v1/auth/register" and os.getenv("NEXUFLOW_REGISTRATION_ENABLED", "false") != "true":
+        return JSONResponse(status_code=503, content={"detail": "Novos cadastros ainda não liberados. Contas existentes podem entrar normalmente."})
     sandbox_path = request.url.path.startswith("/v1/admin/pagbank/") or request.url.path == "/v1/webhooks/pagbank"
     if sandbox_path and os.getenv("NEXUFLOW_PAGBANK_SANDBOX_ENABLED", "false") != "true":
         return JSONResponse(status_code=503, content={"detail": "Testes PagBank ainda não disponíveis."})
@@ -176,6 +182,13 @@ def admin_create_code(body: AdminCodeBody, claims: dict[str, Any] = Depends(admi
     return {'id': code_id, 'code': code, 'type': data['type'], 'durationDays': data['durationDays']}
 
 
+@app.post('/v1/admin/codes/revoke')
+def admin_revoke_code(body: CodeBody, claims: dict[str, Any] = Depends(admin_claims)) -> dict[str, bool]:
+    gateway = services()
+    gateway.rate_limit('admin-revoke-code', claims['uid'], limit=20, window_seconds=3600)
+    return gateway.revoke_unused_code(claims['uid'], body.code)
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {"ok": True, "service": "nexuflow-cloud", "version": app.version}
@@ -234,9 +247,14 @@ async def pagbank_webhook(request: Request):
 
 @app.post("/v1/auth/register", status_code=201)
 async def register(body: RegisterBody, request: Request) -> dict[str, str]:
+    published_version = os.getenv("NEXUFLOW_PUBLISHED_LEGAL_VERSION", "")
+    if not published_version or 'draft' in published_version.lower():
+        raise HTTPException(503, "Documentos de cadastro ainda em revisão.")
+    if not body.acceptedTerms or body.legalVersion != published_version:
+        raise HTTPException(409, "Leia os documentos atuais e confirme antes de criar a conta.")
     gateway = services()
     gateway.rate_limit("register", client_key(request, body.email), limit=5, window_seconds=3600)
-    return await gateway.register(body.displayName, body.email, body.password)
+    return await gateway.register(body.displayName, body.email, body.password, legal_version=published_version)
 
 
 @app.post("/v1/auth/login")
@@ -334,6 +352,7 @@ def license_document(body: LicenseBody, request: Request, claims: dict[str, Any]
     from google.cloud import firestore as google_firestore
 
     gateway = services()
+    gateway.require_verified(claims)
     gateway.rate_limit("license", client_key(request, claims["uid"]), limit=10, window_seconds=3600)
     profile_data = gateway.profile(claims["uid"])
     installation_hash = opaque_hash(body.installationToken, settings().code_hash_pepper)

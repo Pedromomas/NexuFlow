@@ -2,6 +2,14 @@
 from datetime import datetime, timedelta
 
 
+def unused_code_revocation(data: dict, admin_uid: str, now: datetime) -> dict:
+    if data.get('usedAt') or data.get('usedBy') or data.get('deletedAccountHash'):
+        raise ValueError('Código já resgatado. Revogar o benefício exige revisão separada.')
+    if data.get('revoked'):
+        return {}
+    return {'revoked': True, 'revokedBy': admin_uid, 'revokedAt': now}
+
+
 def redemption_updates(data: dict, profile: dict, uid: str, now: datetime):
     if data.get('revoked') or data.get('usedAt') or data.get('usedBy') or data.get('deletedAccountHash'):
         raise ValueError('Código indisponível.')
