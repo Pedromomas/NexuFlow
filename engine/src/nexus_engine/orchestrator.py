@@ -97,7 +97,9 @@ class NexusOrchestrator:
         # Never stack sessions. Restore an interrupted/older BOOST snapshot first.
         old = self.state_store.load()
         if old.get("active"):
-            self.restore_all()
+            restored = self.restore_all()
+            if not restored.get("restored") or self.state_store.load().get("active"):
+                raise RuntimeError("Rollback incompleto. Restaure a sessão anterior antes de iniciar outro BOOST.")
 
         pending_manual = pending_manual_state()
         if pending_manual:

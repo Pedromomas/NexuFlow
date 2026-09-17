@@ -67,20 +67,28 @@ jobs:
         shell: pwsh
         run: |
           npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip install --upgrade pip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip install -e ".\engine[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Testar interface e motor
         shell: pwsh
         run: |
           npm run test:web
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build:desktop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pytest engine/tests app/tests -q
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/anti-cheat-audit.ps1
 
       - name: Gerar sidecar sem janela de console
         shell: pwsh
         run: |
           python -m PyInstaller --noconfirm --clean --onefile --windowed --noupx --name nexus-engine --paths ".\engine\src" --add-data ".\engine\src\nexus_engine\data;data" ".\engine\src\nexus_engine\__main__.py" --distpath ".\engine\dist" --workpath ".\engine\build"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force ".\src-tauri\binaries" | Out-Null
           Copy-Item ".\engine\dist\nexus-engine.exe" ".\src-tauri\binaries\nexus-engine-x86_64-pc-windows-msvc.exe" -Force
 
@@ -93,7 +101,12 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) { throw "TAURI_SIGNING_PRIVATE_KEY ausente" }
           if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD)) { throw "TAURI_SIGNING_PRIVATE_KEY_PASSWORD ausente" }
 
+      - name: Testar host Rust
+        shell: pwsh
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+
       - name: Criar draft, instalador, assinatura e latest.json
+        id: release
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -108,3 +121,15 @@ jobs:
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
           args: --features signed-updater --config src-tauri/tauri.updater.release.conf.json
+
+      - name: Gerar e anexar inventario, hashes e notas
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $installer = Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe | Select-Object -First 1
+          if (-not $installer) { throw "Instalador ausente" }
+          ./scripts/release-evidence.ps1 -Installer $installer.FullName
+          gh release upload $env:RELEASE_TAG outputs/release-evidence/* --clobber
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

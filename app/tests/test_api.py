@@ -24,7 +24,10 @@ def test_mutation_requires_token():
         assert response.status_code == 401
 
 
-def test_mutation_with_token_is_platform_guarded():
+def test_mutation_with_token_is_platform_guarded(monkeypatch):
+    # Never start a real privileged daemon if the test runner is elevated.
+    from app import api_server
+    monkeypatch.setattr(api_server, '_start_detached_daemon', lambda _: {'ok': True})
     with TestClient(app, base_url="http://127.0.0.1") as client:
         response = client.post(
             "/api/v1/boost/start",
@@ -42,6 +45,23 @@ def test_untrusted_host_is_rejected():
     with TestClient(app, base_url="http://127.0.0.1") as client:
         response = client.get("/api/v1/health", headers={"Host": "evil.example"})
         assert response.status_code == 400
+
+
+def test_stop_reports_pending_rollback(monkeypatch):
+    from app import api_server
+    monkeypatch.setattr(api_server, '_require_windows_admin', lambda: None)
+    monkeypatch.setattr(api_server, 'stop_daemon', lambda: {'stopped': True, 'restore_pending': True})
+    assert api_server.boost_stop()['ok'] is False
+
+
+def test_restore_waits_for_the_daemon_before_touching_manual_state(monkeypatch):
+    from app import api_server
+    monkeypatch.setattr(api_server, '_require_windows_admin', lambda: None)
+    monkeypatch.setattr(api_server, 'stop_daemon', lambda: {'stopped': False, 'restore_pending': True})
+    def forbidden():
+        raise AssertionError('A running daemon must remain the only rollback writer')
+    monkeypatch.setattr(api_server.route_selector, 'restore', forbidden)
+    assert api_server.restore_all()['ok'] is False
 
 
 def test_cors_does_not_allow_arbitrary_origin():

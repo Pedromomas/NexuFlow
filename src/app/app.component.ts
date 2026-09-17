@@ -17,11 +17,11 @@ import {
 import { NexusService } from './core/nexus.service';
 import { PerformanceCenterComponent } from './performance-center.component';
 import { UpdateService } from './core/update.service';
-import { SubscriptionService } from './core/subscription.service';
-import { AccountCenterComponent } from './account-center.component';
-import { AccountService } from './core/account.service';
+import { ProfileCollectionComponent, CollectibleReward } from './profile-collection.component';
+import { ThemeCompanionComponent } from './theme-companion.component';
+import { DonationComponent } from './donation.component';
 
-type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem' | 'connection' | 'pc' | 'account';
+type Tab = 'dashboard' | 'games' | 'history' | 'investigator' | 'appearance' | 'settings' | 'redeem' | 'connection' | 'pc' | 'account' | 'support';
 type UiTheme = 'nebula' | 'midnight' | 'emerald' | 'high-contrast' | 'blocks' | 'relic' | 'tactical' | 'operation' | 'secret' | 'secret-rio' | 'secret-kiwi';
 type SecretRewardId = 'origin' | 'rio' | 'kiwi';
 type AppearanceSection = 'themes' | 'accessibility';
@@ -51,20 +51,15 @@ interface SecretReward {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonApp, PerformanceCenterComponent, AccountCenterComponent],
+  imports: [CommonModule, FormsModule, IonApp, PerformanceCenterComponent, ProfileCollectionComponent, ThemeCompanionComponent, DonationComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent implements OnInit, OnDestroy {
-  entryGateVisible = this.shouldShowEntryGate();
-  entryMode: 'login' | 'register' = 'login';
-  entryName = '';
-  entryEmail = '';
-  entryPassword = '';
-  entryAcceptedTerms = false;
   tab: Tab = 'dashboard';
   profile: BoostProfile = 'complete';
   boosted = false;
+  private boostRevision = 0;
   busy = false;
   boostIntent: 'idle' | 'starting' | 'stopping' = 'idle';
   boostStartedAt = 0;
@@ -149,7 +144,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly legacyBoostModeKey = 'nexuflow_boost_mode_v150';
   private readonly olderBoostModeKey = 'nexuflow_boost_mode_v142';
 
-  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef, public readonly updates: UpdateService, public readonly subscription: SubscriptionService, public readonly account: AccountService) {
+  constructor(private readonly nexus: NexusService, private readonly cdr: ChangeDetectorRef, public readonly updates: UpdateService) {
     this.apiTokenDraft = this.nexus.getStoredApiToken();
     this.transport = this.nexus.transportLabel();
     this.desktopMode = this.nexus.isDesktop();
@@ -163,7 +158,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    await this.account.initialize();
     if (this.desktopMode) {
       const unlisten = await listen<string>('desktop-status', event => {
         this.message = event.payload;
@@ -181,49 +175,6 @@ export class AppComponent implements OnInit, OnDestroy {
     void this.updates.checkWhenSafe(this.protectedGameActive, this.boosted);
     await Promise.all([this.refreshGames(), this.refreshHealth(), this.refreshHistory()]);
     if (!this.destroyed) this.timer = setInterval(() => void this.periodicRefresh(), 1000);
-  }
-
-  setEntryMode(mode: 'login' | 'register'): void {
-    this.entryMode = mode;
-    this.entryPassword = '';
-    this.cdr.markForCheck();
-  }
-
-  continueFree(): void {
-    try { sessionStorage.setItem('nexuflow_entry_complete_v1', '1'); }
-    catch { /* Hardened webviews may deny storage; the current session still opens. */ }
-    this.entryGateVisible = false;
-    this.message = 'Safe Core gratuito iniciado. Conta continua opcional.';
-    this.cdr.markForCheck();
-  }
-
-  private shouldShowEntryGate(): boolean {
-    try { return sessionStorage.getItem('nexuflow_entry_complete_v1') !== '1'; }
-    catch { return true; }
-  }
-
-  openAccountFromEntry(mode: 'login' | 'register'): void {
-    this.setEntryMode(mode);
-    this.continueFree();
-    this.setTab('account');
-  }
-
-  async submitEntryAccount(): Promise<void> {
-    if (!this.account.configured || this.account.state === 'busy') return;
-    try {
-      if (this.entryMode === 'register') {
-        if (!this.entryAcceptedTerms) throw new Error('Aceite os termos e a política de privacidade para criar a conta.');
-        await this.account.register(this.entryName, this.entryEmail, this.entryPassword);
-      } else {
-        await this.account.login(this.entryEmail, this.entryPassword);
-      }
-      this.entryPassword = '';
-      if (this.account.authenticated) this.continueFree();
-    } catch (error) {
-      this.account.state = 'error';
-      this.account.message = error instanceof Error ? error.message : 'Não foi possível continuar.';
-    }
-    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {
@@ -251,7 +202,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get protectedGameActive(): boolean {
-    return !!this.telemetry?.anti_cheat?.active || ['riot_safe', 'valve_safe', 'protected_safe'].includes(this.telemetry?.effective_profile ?? '');
+    return !!this.telemetry?.anti_cheat?.active || ['riot_safe', 'valve_safe', 'protected_safe', 'unknown_safe'].includes(this.telemetry?.effective_profile ?? '');
   }
 
   async installUpdate(): Promise<void> {
@@ -330,6 +281,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.secretCodeBusy = true;
     try {
+      // Community cosmetics are local, free and never authorize system actions.
       const bytes = new TextEncoder().encode(normalized);
       const digest = await crypto.subtle.digest('SHA-256', bytes);
       const hex = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
@@ -360,8 +312,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.persistUiPreferences();
       if (reward.id === 'origin') void this.playSecretUnlockAudio();
       setTimeout(() => document.getElementById('unlock-continue')?.focus());
-    } catch {
-      this.secretCodeMessage = 'Não foi possível validar o código neste ambiente.';
+    } catch (error) {
+      this.secretCodeMessage = error instanceof Error ? error.message : 'Não foi possível validar o código neste ambiente.';
     } finally {
       this.secretCodeBusy = false;
       this.cdr.markForCheck();
@@ -412,6 +364,32 @@ export class AppComponent implements OnInit, OnDestroy {
   get themePanelArtwork(): string {
     if (!this.isSecretTheme) return 'theme-art/flux-mascot.png';
     return this.secretRewards.find(reward => reward.theme === this.uiTheme)?.panelArtwork ?? this.themeArtwork;
+  }
+
+  get activeSecretReward(): SecretReward | undefined {
+    return this.secretRewards.find(reward => reward.theme === this.uiTheme && this.unlockedSecretRewards.includes(reward.id));
+  }
+
+  get profileAvatar(): string {
+    return this.activeSecretReward ? 'theme-art/secret/' + this.activeSecretReward.id + '-avatar.png' : 'theme-art/flux-mascot.png';
+  }
+
+  get profileCollection(): CollectibleReward[] {
+    return this.secretRewards.map(reward => ({
+      id: reward.id, title: reward.title, theme: reward.theme, artwork: reward.artwork,
+      avatar: 'theme-art/secret/' + reward.id + '-avatar.png',
+      badge: this.rewardBadge(reward.id),
+      unlocked: this.unlockedSecretRewards.includes(reward.id)
+    }));
+  }
+
+  equipCollectionTheme(theme: string): void {
+    const reward = this.secretRewards.find(reward => reward.theme === theme);
+    if (reward && this.unlockedSecretRewards.includes(reward.id)) this.setTheme(reward.theme);
+  }
+
+  rewardBadge(id: string): string {
+    return id === 'origin' ? 'theme-art/secret/origin-badge.png' : 'theme-art/secret/' + id + '-badge.svg';
   }
 
   get themeStory(): {eyebrow: string; title: string; copy: string; alt: string} {
@@ -712,7 +690,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   gameIcon(gameId?: string | null): string {
     const id = String(gameId || 'generic').toLowerCase();
-    return `game-icons/${['roblox', 'lol', 'valorant', 'cs2'].includes(id) ? id : 'generic'}.svg`;
+    return `game-icons/${['roblox', 'lol', 'valorant', 'cs2', 'fortnite', 'fallguys', 'pubg', 'rainbow6', 'dayz', 'arma3'].includes(id) ? id : 'generic'}.svg`;
   }
 
   get qualityBefore(): QualitySnapshot | null {
@@ -1086,12 +1064,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async toggleBoost(): Promise<void> {
     if (this.busy) return;
-    if (!this.boosted && this.updates.securityUpdateBlocking) {
+    if (!this.boosted && (this.updates.securityUpdateBlocking || this.updates.busy)) {
       this.message = 'BOOST bloqueado até concluir a correção crítica assinada.';
       this.cdr.markForCheck();
       return;
     }
     const wasBoosted = this.boosted;
+    this.boostRevision++;
     this.busy = true;
     this.boostIntent = wasBoosted ? 'stopping' : 'starting';
     this.boostStartedAt = Date.now();
@@ -1112,6 +1091,7 @@ export class AppComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.message = `Falha de comunicação: ${String(error)}`;
     } finally {
+      this.boostRevision++;
       this.busy = false;
       this.boostIntent = 'idle';
       this.cdr.markForCheck();
@@ -1135,17 +1115,19 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async restoreAll(): Promise<void> {
     if (this.busy) return;
+    this.boostRevision++;
     this.busy = true;
     this.message = 'Executando rollback completo…';
     this.cdr.markForCheck();
     try {
       const result = await this.nexus.restoreAll(this.profile);
-      this.boosted = false;
+      if (result.ok) this.boosted = false;
       this.message = result.message;
       await Promise.all([this.refreshTelemetry(), this.refreshHistory(), this.refreshHealth()]);
     } catch (error) {
       this.message = `Falha no rollback: ${String(error)}`;
     } finally {
+      this.boostRevision++;
       this.busy = false;
       this.cdr.markForCheck();
     }
@@ -1193,7 +1175,10 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private async refreshTelemetry(): Promise<void> {
+    const revision = this.boostRevision;
+    const duringAction = this.busy;
     const next = await this.nexus.telemetry();
+    if (revision !== this.boostRevision || duringAction || this.busy) return;
     this.telemetry = next;
     this.boosted = next.daemon_active;
     if (!next.engine_online && !this.busy) {

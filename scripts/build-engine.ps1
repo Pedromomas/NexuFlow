@@ -21,7 +21,9 @@ Remove-Item (Join-Path $Root "engine\src\nexuflow_engine.egg-info") -Recurse -Fo
 
 & $Py -m pip install --upgrade pip
 & $Py -m pip install -e ".\engine[dev]"
-& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '2.1.0-beta.1', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
+$ExpectedVersion = (Get-Content (Join-Path $Root 'package.json') -Raw | ConvertFrom-Json).version
+& $Py -c "import pathlib,nexus_engine; assert nexus_engine.__version__ == '$ExpectedVersion', nexus_engine.__version__; assert pathlib.Path(nexus_engine.__file__).resolve().is_relative_to(pathlib.Path(r'$Root\engine\src').resolve()), nexus_engine.__file__"
+if ($LASTEXITCODE -ne 0) { throw "Versao ou origem do engine divergente." }
 $PytestTemp = Join-Path $Root ".pytest-tmp"
 Remove-Item -Recurse -Force $PytestTemp -ErrorAction SilentlyContinue
 & $Py -m pytest .\engine\tests .\app\tests --basetemp="$PytestTemp" -q

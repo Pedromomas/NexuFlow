@@ -9,12 +9,15 @@ src-tauri/target/
 engine/.venv/
 engine/build/
 engine/dist/
+engine/dist-beta4/
+engine/build-beta4/
 engine/build-v17/
 engine/dist-v17/
 engine/.pytest-*/
 engine/src/*.egg-info/
 release/
 output/
+outputs/
 tmp/
 MANIFEST.sha256
 nexus-engine.spec
@@ -32,5 +35,17 @@ src-tauri/tauri.updater.conf.json
 engine/.build-*/
 engine/.dist-*/
 out-tsc/
+cloud-backend/.env
+cloud-backend/.venv/
+cloud-backend/service-account*.json
+**/firebase-service-account.json
+**/nexuflow-dev-*.json
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.p12
+firebase-debug.log
 
 .pytest-tmp/

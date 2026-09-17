@@ -25,6 +25,8 @@ export class NexusService {
   connectionScans: ConnectionScan[] = [];
   dnsRanking: DnsRanking | null = null;
   centerBusy = false;
+  updateInProgress = false;
+  boostStarting = false;
 
   async scanConnection(): Promise<ConnectionScan> {
     return this.isDesktop() ? invoke<ConnectionScan>('scan_connection') : this.api<ConnectionScan>('/connection/scan');
@@ -103,6 +105,8 @@ export class NexusService {
   }
 
   async startBoost(profile: BoostProfile): Promise<EngineResponse> {
+    if (this.updateInProgress) return { ok: false, action: 'start', message: 'Aguarde a operação de atualização antes de iniciar o BOOST.' };
+    this.boostStarting = true;
     try {
       if (this.isDesktop()) return await invoke<EngineResponse>('start', { profile });
       return await this.api<EngineResponse>('/boost/start', {
@@ -111,7 +115,7 @@ export class NexusService {
       }, true);
     } catch (error) {
       return { ok: false, action: 'start', message: String(error) };
-    }
+    } finally { this.boostStarting = false; }
   }
 
   async stopBoost(profile: BoostProfile = 'auto'): Promise<EngineResponse> {

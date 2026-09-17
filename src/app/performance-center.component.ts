@@ -13,6 +13,7 @@ export class PerformanceCenterComponent implements OnDestroy {
   @Input() health: GamingHealth = {};
   @Input() boosted = false;
   @Input() boostBusy = false;
+  @Input() boostIntent: 'idle' | 'starting' | 'stopping' = 'idle';
   @Output() refresh = new EventEmitter<void>();
   @Output() preparePc = new EventEmitter<void>();
   @Output() toggleSmart = new EventEmitter<void>();
@@ -54,6 +55,15 @@ export class PerformanceCenterComponent implements OnDestroy {
   get scan(): ConnectionScan | null { return this.nexus.connectionScans[this.selectedScan] ?? null; }
   get monitor() { return this.telemetry?.engine_online ? this.telemetry.connection_history : null; }
   get live(): boolean { return !!this.monitor && !this.monitor.stale; }
+  get protectedGameActive(): boolean {
+    return this.telemetry?.anti_cheat?.active === true
+      || ['riot_safe', 'valve_safe', 'protected_safe', 'unknown_safe'].includes(this.telemetry?.effective_profile ?? '');
+  }
+  get automationState(): 'desligado' | 'preparando' | 'ligado' | 'restaurando' {
+    if (this.boostIntent === 'starting') return 'preparando';
+    if (this.boostIntent === 'stopping') return 'restaurando';
+    return this.boosted ? 'ligado' : 'desligado';
+  }
   get graphMax(): number { return Math.max(10, ...(this.monitor?.samples ?? []).map(s => s.latency_ms ?? 0)); }
   get graphPaths(): string[] {
     const samples = this.monitor?.samples ?? [];
@@ -72,7 +82,7 @@ export class PerformanceCenterComponent implements OnDestroy {
     return samples.flatMap((s, i) => s.latency_ms === null ? [10 + i / Math.max(1, samples.length - 1) * 780] : []);
   }
   async run(kind: 'scan' | 'dns'): Promise<void> {
-    if (this.nexus.centerBusy) return;
+    if (this.nexus.centerBusy || this.nexus.updateInProgress) return;
     this.nexus.centerBusy = true; this.notice = kind === 'scan' ? 'Comparando três referências; cerca de 3 a 12 segundos…' : 'Consultando dois servidores de cada provedor…';
     try {
       if (kind === 'scan') {
@@ -88,7 +98,7 @@ export class PerformanceCenterComponent implements OnDestroy {
   }
   async toggleDnsLive(): Promise<void> {
     if (this.dnsLive) { this.stopDnsLive(); return; }
-    if (this.nexus.centerBusy || !this.telemetry?.engine_online) return;
+    if (this.nexus.centerBusy || this.nexus.updateInProgress || !this.telemetry?.engine_online) return;
     this.dnsLive = true;
     this.dnsLiveSeconds = 0;
     this.dnsLiveSamples = [];
@@ -102,7 +112,7 @@ export class PerformanceCenterComponent implements OnDestroy {
     this.cdr.markForCheck();
   }
   private async captureDnsLive(): Promise<void> {
-    if (!this.dnsLive || this.destroyed || this.nexus.centerBusy) return;
+    if (!this.dnsLive || this.destroyed || this.nexus.centerBusy || this.nexus.updateInProgress) { this.stopDnsLive(); return; }
     this.nexus.centerBusy = true;
     try {
       const result = await this.nexus.rankDns();
@@ -136,8 +146,9 @@ export class PerformanceCenterComponent implements OnDestroy {
     }).join(' ');
   }
   async runSpeed(): Promise<void> {
-    if (this.speedBusy || this.boosted) return;
+    if (this.speedBusy || this.boosted || this.protectedGameActive || this.nexus.centerBusy || this.nexus.updateInProgress) return;
     this.speedBusy = true;
+    this.nexus.centerBusy = true;
     this.speedTest = null;
     this.notice = 'Transferindo no máximo 30 MiB para medir download e upload. Não feche esta tela.';
     this.cdr.markForCheck();
@@ -145,7 +156,7 @@ export class PerformanceCenterComponent implements OnDestroy {
       this.speedTest = await this.nexus.runSpeedTest();
       this.notice = 'Teste rápido concluído. Resultado aproximado para um único edge, sem alterar sua rede.';
     } catch (error) { this.notice = `Teste indisponível: ${String(error)}`; }
-    finally { this.speedBusy = false; this.cdr.markForCheck(); }
+    finally { this.speedBusy = false; this.nexus.centerBusy = false; this.cdr.markForCheck(); }
   }
   compare(target?: string | null): string {
     const current = this.scan?.results.find(r => r.target === target);

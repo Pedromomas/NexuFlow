@@ -18,11 +18,12 @@ export class SubscriptionService {
    */
   readonly configured = false;
   readonly plans: readonly SubscriptionPlan[] = [
-    { id: 'day', label: 'Passe diário', priceBrl: 1, durationLabel: '1 dia' },
-    { id: 'week', label: 'Passe semanal', priceBrl: 5, durationLabel: '7 dias' },
-    { id: 'month', label: 'Plano mensal', priceBrl: 10, durationLabel: '30 dias', highlight: true },
-    { id: 'year', label: 'Plano anual', priceBrl: 80, durationLabel: '1 ano' }
+    { id: 'day', label: 'Passe diário', priceBrl: 0.99, durationLabel: '1 dia' },
+    { id: 'week', label: 'Passe semanal', priceBrl: 4.99, durationLabel: '7 dias' },
+    { id: 'month', label: 'Plano mensal', priceBrl: 9.99, durationLabel: '30 dias', highlight: true },
+    { id: 'year', label: 'Plano anual', priceBrl: 79.99, durationLabel: '1 ano' }
   ];
+  formatPrice(value: number): string { return value.toFixed(2).replace('.', ','); }
   readonly freeFeatures = ['Safe Core', 'Diagnóstico básico', 'Otimizações simples', 'Todos os temas', 'Mascote Flux'];
   readonly premiumFeatures = ['Latency Lab completo', 'Perfis automáticos de DNS por jogo', 'Recursos avançados futuros'];
   readonly duoPolicy = 'Titular + 1 amigo por convite de e-mail verificado, com conta separada, revogação e troca protegida por carência.';

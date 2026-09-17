@@ -14,19 +14,14 @@ describe('AppComponent', () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it('offers a complete first-run choice without making an account mandatory', async () => {
+  it('opens the community edition directly without an account gate', async () => {
     sessionStorage.removeItem('nexuflow_entry_complete_v1');
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Seu PC mais leve.');
-    expect(text).toContain('Continuar com o Safe Core');
-    expect(text).toContain('Contas online em preparação');
-    expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
-    fixture.componentInstance.continueFree();
-    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.entry-gate')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-account-center')).toBeNull();
     expect(fixture.nativeElement.querySelector('.sidebar')).toBeTruthy();
     fixture.destroy();
   });
@@ -59,6 +54,7 @@ describe('AppComponent', () => {
     app.secretCodeDraft = 'NEXU-SECRETO-157'; await app.redeemSecretCode();
     expect(app.unlockedSecretRewards).toEqual(['origin']);
     expect(app.secretOriginUnlocked).toBe(true);
+    expect(app.rewardBadge('origin')).toContain('origin-badge.png');
     expect(app.secretRioUnlocked).toBe(false);
     expect(app.secretKiwiUnlocked).toBe(false);
     app.dismissUnlockCelebration();
@@ -70,6 +66,8 @@ describe('AppComponent', () => {
     expect(app.unlockReward.panelArtwork).toContain('rio-pulse-beacon-panel-2.1.png');
     expect(app.themeSignatureIcon).toBe('icon-rio-pulse');
     expect(app.themedNavigationIcon('connection')).toBe('icon-rio-wave');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.rio-winged-phone')).toBeTruthy();
     app.dismissUnlockCelebration();
 
     app.secretCodeDraft = 'NEXU-KIWI-021'; await app.redeemSecretCode();
@@ -229,6 +227,28 @@ describe('AppComponent', () => {
     fixture.destroy();
   });
 
+  it('ignores telemetry started before BOOST and refuses duplicate clicks', async () => {
+    await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    const nexus = TestBed.inject(NexusService);
+    let finishTelemetry!: (value: any) => void;
+    vi.spyOn(nexus, 'telemetry').mockReturnValue(new Promise(resolve => { finishTelemetry = resolve; }));
+    vi.spyOn(app as any, 'refreshAfterBoost').mockResolvedValue(undefined);
+    let finishBoost!: (value: EngineResponse) => void;
+    const start = vi.spyOn(nexus, 'startBoost').mockReturnValue(new Promise(resolve => { finishBoost = resolve; }));
+    const stale = (app as any).refreshTelemetry();
+    const activation = app.toggleBoost();
+    await app.toggleBoost();
+    expect(start).toHaveBeenCalledTimes(1);
+    finishBoost({ok: true, action: 'start', message: 'Ativado'});
+    await activation;
+    finishTelemetry({daemon_active: false, engine_online: true});
+    await stale;
+    expect(app.boosted).toBe(true);
+    fixture.destroy();
+  });
+
   it('blocks a new BOOST session while a signed critical update is pending', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
@@ -304,7 +324,7 @@ describe('AppComponent', () => {
     const app = fixture.componentInstance;
     app.tab = 'settings'; fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('CENTRAL DE ATUALIZAÇÕES');
-    expect(fixture.nativeElement.textContent).toContain('Aguardando canal assinado');
+    expect(fixture.nativeElement.textContent).toContain('Atualizações automáticas em preparação');
     await app.checkForUpdates(); fixture.detectChanges();
     expect(app.updates.state).toBe('error');
     expect(app.updates.error).toContain('build não inclui o canal assinado');
@@ -322,29 +342,26 @@ describe('AppComponent', () => {
     fixture.destroy();
   });
 
-  it('shows account, profile and subscription entry points without fake registration', async () => {
+  it('shows the local profile without account or subscription entry points', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
     fixture.componentInstance.tab = 'account'; fixture.detectChanges();
     await Promise.resolve(); fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Conta e assinatura');
-    expect(text).toContain('Criar conta');
-    expect(text).toContain('Cadastro ainda não foi aberto');
-    expect(fixture.nativeElement.querySelector('.account-submit').disabled).toBe(true);
+    expect(text).toContain('Perfil de explorador');
+    expect(fixture.nativeElement.querySelector('app-account-center')).toBeNull();
     fixture.destroy();
   });
 
-  it('shows every planned price without enabling a fake checkout', async () => {
+  it('has no prices or checkout and explains that every feature is free', async () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     const fixture = TestBed.createComponent(AppComponent);
     fixture.componentInstance.tab = 'settings'; fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('R$1');
-    expect(text).toContain('R$5');
-    expect(text).toContain('R$10');
-    expect(text).toContain('R$80');
-    expect(text).toContain('Titular + 1 amigo');
+    expect(text).not.toContain('R$0,99');
+    expect(text).not.toContain('R$79,99');
+    expect(text).toContain('Todas as funções disponíveis nesta versão são gratuitas');
+    expect(fixture.nativeElement.querySelector('.subscription-preview')).toBeNull();
     expect(fixture.nativeElement.querySelector('.subscription-preview button')).toBeNull();
     fixture.destroy();
   });

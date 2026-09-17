@@ -94,6 +94,14 @@ def run_daemon(profile: BoostProfile, ready: Callable[[dict], None]) -> None:
     except Exception as exc:
         interrupted_restore = {"restored": False, "errors": [str(exc)]}
 
+    if interrupted_restore is not None and (
+        not interrupted_restore.get("restored") or engine.state_store.load().get("active")
+    ):
+        quality_monitor.stop()
+        ready({"ok": False, "action": "start", "message": "Rollback pendente. Use Restaurar tudo antes de iniciar o BOOST.",
+               "data": {"interrupted_restore": interrupted_restore}, "warnings": []})
+        return
+
     boosted: dict | None = None
     post_capture_due: float | None = None
     last_adaptive_check = 0.0
@@ -333,5 +341,9 @@ def stop_daemon(wait_seconds: float = 12.0) -> dict:
     deadline = time.time() + wait_seconds
     while daemon_is_running() and time.time() < deadline:
         time.sleep(0.2)
+    if daemon_is_running():
+        # The live daemon owns its rollback. Never race it with a second writer.
+        return {"stopped": False, "restore_pending": True,
+                "restore": {"restored": False, "message": "Aguarde o motor terminar a restauração."}}
     restore = NexusOrchestrator().restore_all()
-    return {"stopped": not daemon_is_running(), "restore": restore}
+    return {"stopped": True, "restore_pending": bool(StateStore().load().get("active")), "restore": restore}

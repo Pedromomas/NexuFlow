@@ -30,7 +30,7 @@ from nexus_engine.network.quality import NetworkQualityMonitor, QUALITY_TARGETS
 from nexus_engine.orchestrator import NexusOrchestrator
 from nexus_engine.investigator import investigator_snapshot
 from nexus_engine.report_signing import sign_report
-from nexus_engine.state import pending_manual_state
+from nexus_engine.state import StateStore, pending_manual_state
 from nexus_engine.telemetry import (
     anti_cheat_status,
     diagnostics,
@@ -320,22 +320,27 @@ def boost_start(payload: BoostRequest) -> dict:
 @app.post("/api/v1/boost/stop", dependencies=[Depends(require_api_token)])
 def boost_stop() -> dict:
     _require_windows_admin()
-    return {"ok": True, "action": "stop", "message": "NexuFlow desativado.", "data": stop_daemon()}
+    data = stop_daemon()
+    ok = data.get("stopped") is True and data.get("restore_pending") is False
+    return {"ok": ok, "action": "stop", "message": "NexuFlow desativado." if ok else "Rollback pendente. Use Restaurar tudo.", "data": data}
 
 
 @app.post("/api/v1/restore", dependencies=[Depends(require_api_token)])
 def restore_all() -> dict:
     _require_windows_admin()
     daemon_result = stop_daemon()
+    if daemon_result.get("stopped") is not True or daemon_result.get("restore_pending") is not False:
+        return {"ok": False, "action": "restore", "message": "Rollback pendente. Aguarde o motor e tente novamente.", "data": {"daemon": daemon_result}}
     route_result = route_selector.restore()
     dns_result = dns_service.restore()
     tcp_result = tcp_service.revert()
     process_result = process_monitor.restore_all()
     core_result = NexusOrchestrator().restore_all()
+    ok = not (process_result.get("errors") or pending_manual_state() or StateStore().load().get("active"))
     return {
-        "ok": True,
+        "ok": ok,
         "action": "restore",
-        "message": "Rollback completo executado.",
+        "message": "Rollback completo executado." if ok else "Rollback incompleto. Há alterações pendentes de restauração.",
         "data": {
             "daemon": daemon_result,
             "route_selector": route_result,

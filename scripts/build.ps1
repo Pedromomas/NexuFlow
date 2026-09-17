@@ -20,8 +20,11 @@ if ($CertificateThumbprint) {
 }
 
 npm install
+if ($LASTEXITCODE -ne 0) { throw "Instalacao das dependencias falhou; nenhum instalador novo foi validado." }
 npm run test:web
+if ($LASTEXITCODE -ne 0) { throw "Testes da interface falharam; publicacao bloqueada." }
 npm run build
+if ($LASTEXITCODE -ne 0) { throw "Compilacao falhou; nao distribuir instaladores antigos da pasta de saida." }
 
 if ($CertificateThumbprint) {
   Get-ChildItem ".\src-tauri\target\release\bundle" -Recurse -Filter *.exe -ErrorAction SilentlyContinue |

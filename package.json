@@ -1,17 +1,19 @@
 {
   "name": "nexuflow",
-  "version": "2.1.0-beta.3",
+  "version": "2.1.0-rc.2",
   "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "ionic:serve": "ng serve --host 127.0.0.1 --port 8100",
     "build:web": "ng build",
-    "build:desktop": "ng build --base-href ./ && node scripts/verify-desktop-bundle.mjs",
+    "build:desktop": "node scripts/verify-account-config.mjs && node scripts/verify-donation.mjs && ng build --base-href ./ && node scripts/verify-desktop-bundle.mjs",
+    "verify:accounts": "node scripts/verify-account-config.mjs --require-accounts",
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
     "test:web": "ng test --watch=false",
+    "test:license": "vitest run --config scripts/vitest-license.config.mts --configLoader runner",
     "engine:test": "python -m pytest engine/tests app/tests -q",
     "api": "python -m uvicorn app.api_server:app --host 127.0.0.1 --port 8000"
   },
@@ -39,6 +41,7 @@
     "@tauri-apps/cli": "^2.11.4",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
+    "qrcode": "^1.5.4",
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"

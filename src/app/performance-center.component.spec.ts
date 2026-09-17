@@ -45,6 +45,16 @@ describe('Performance centers 2.1', () => {
     c.boosted = true; await c.runSpeed(); expect(spy).not.toHaveBeenCalled();
     c.boosted = false; await c.runSpeed(); expect(c.speedTest?.download_mbps).toBe(100); f.destroy();
   });
+  it('blocks the speed test in a protected runtime and exposes every automation state', async () => {
+    const {f, c, service} = await create();
+    const spy = vi.spyOn(service, 'runSpeedTest');
+    c.telemetry = {engine_online: true, anti_cheat: {active: true}} as Telemetry;
+    await c.runSpeed(); expect(spy).not.toHaveBeenCalled();
+    c.boostIntent = 'starting'; expect(c.automationState).toBe('preparando');
+    c.boostIntent = 'stopping'; expect(c.automationState).toBe('restaurando');
+    c.boostIntent = 'idle'; c.boosted = true; expect(c.automationState).toBe('ligado');
+    c.boosted = false; expect(c.automationState).toBe('desligado'); f.destroy();
+  });
   it('keeps Safe Core independent and emits the automation action', async () => {
     const {f, c} = await create(); c.mode = 'pc'; c.telemetry = {engine_online: true} as Telemetry;
     const spy = vi.spyOn(c.toggleSmart, 'emit'); f.detectChanges();

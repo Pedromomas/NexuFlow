@@ -2,6 +2,8 @@
 
 # ⚡ NexuFlow
 
+**Edição Comunidade — 100% gratuita.** Todas as funções implementadas estão disponíveis sem conta, assinatura, trial ou licença paga. Códigos secretos são cosméticos gratuitos. As proteções durante partidas continuam obrigatórias. A versão 2.1 está em revisão para lançamento; não é certificada por fabricantes de anticheat.
+
 ### Performance, diagnóstico de latência e segurança para jogos competitivos no Windows
 
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)
@@ -9,11 +11,23 @@
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão em validação: 2.1.0-beta.3 — Portas Abertas**
+**Versão em validação: 2.1 — Edição Comunidade**
 
-Safe Core obrigatório e independente da automação, entrada transparente com conta opcional, Central do PC redesenhada, três universos secretos completos, DNS comparativo ao vivo, speed test limitado e canal de atualização assinado. Veja [o marco 2.1 beta](docs/RELEASE_2.1_BETA.md), [a auditoria de segurança](docs/SECURITY_AUDIT_2.1.md) e [as notas da 1.8](docs/RELEASE_1.8.md).
+[Baixar a versão de revisão 2.1.0-rc.2](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0-rc.2) · [Limitações e testes pendentes](docs/STABLE_GATES.md) · [Relatar vulnerabilidade](SECURITY.md)
+
+Safe Core obrigatório e independente da automação, entrada direta sem cadastro, Central do PC, três temas secretos, DNS comparativo e speed test limitado. O atualizador exige pacotes assinados, mas a distribuição pública ainda depende de publicação e validação. Veja [a revisão da edição gratuita](docs/COMMUNITY_REVIEW_20260917.md). Documentos anteriores sobre contas e monetização são históricos e não definem a edição atual.
 
 </div>
+
+## Apoie se puder
+
+Se o NexuFlow te ajudou, até R$ 1 já dá uma força para continuar o projeto. Se não puder, tudo bem: o aplicativo inteiro continua gratuito. Não há assinatura, recompensa paga ou desbloqueio de funções.
+
+No aplicativo, abra **Apoiar o projeto** para ver o QR Code, copiar a chave ou o Pix Copia e Cola. Valor livre, confirmado somente no seu banco. Confira o destinatário **Pedro Fernandes Bahia Rocha** antes de enviar.
+
+Chave Pix: `eba4282e-5305-4de8-ae77-220a07d831e7`.
+
+![QR Code Pix voluntário, sem valor definido](public/donation-pix.svg)
 
 > O NexuFlow é uma plataforma local para entender e melhorar a experiência de jogo sem promessas mágicas: mede latência, qualidade de rede, saúde do PC e oferece ajustes conservadores com rollback.
 

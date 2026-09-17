@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,4 +37,14 @@ for (const reference of assetReferences) {
   }
 }
 
-console.log(`Desktop bundle verificado: ${assetReferences.length} arquivos locais e CSS compativel com a CSP.`);
+const runtime = JSON.parse(readFileSync(resolve(projectRoot, 'public/nexuflow-runtime-config.json'), 'utf8'));
+if (runtime.edition === 'community') {
+  const accountRoutes = ['/v1/auth/login', '/v1/auth/register', '/v1/license', '/v1/admin/pagbank/checkout'];
+  for (const file of readdirSync(outputRoot).filter(name => name.endsWith('.js'))) {
+    const code = readFileSync(resolve(outputRoot, file), 'utf8');
+    if (accountRoutes.some(route => code.includes(route))) {
+      throw new Error(`Community bundle refused: account/payment client included in ${file}.`);
+    }
+  }
+}
+console.log(`Desktop bundle verificado: ${assetReferences.length} arquivos locais, CSS compativel com a CSP e nenhuma rota comercial na edicao Comunidade.`);

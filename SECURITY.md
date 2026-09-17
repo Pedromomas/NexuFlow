@@ -2,7 +2,7 @@
 
 ## Como relatar
 
-Enquanto o projeto permanecer privado, envie o relato diretamente ao responsável pelo repositório. Inclua versão, comportamento observado, impacto, passos mínimos para reprodução e arquivos estritamente necessários. Não envie tokens, dados pessoais ou dumps de memória de jogos.
+Envie relatos de vulnerabilidades para **guilhermefudido5@gmail.com**, com o assunto “Segurança NexuFlow”. Inclua versão, comportamento observado, impacto, passos mínimos para reprodução e arquivos estritamente necessários. Não publique detalhes de uma vulnerabilidade ativa em uma issue e não envie tokens, senhas, dados pessoais ou dumps de memória de jogos.
 
 ## Compromissos
 

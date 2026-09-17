@@ -1,5 +1,7 @@
 {
+  "edition": "community",
   "accountApiBase": "",
   "privacyPolicyUrl": "",
-  "termsUrl": ""
+  "termsUrl": "",
+  "licensePublicKey": ""
 }

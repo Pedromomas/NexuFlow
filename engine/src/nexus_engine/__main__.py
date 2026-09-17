@@ -111,7 +111,8 @@ def _handle_job(request_path: Path, result_path: Path) -> None:
         return
     if action == "restore":
         data = stop_daemon()
-        _write_result(result_path, {"ok": True, "action": "restore", "message": "Rollback completo executado.", "data": data})
+        ok = data.get("stopped") is True and data.get("restore_pending") is False
+        _write_result(result_path, {"ok": ok, "action": "restore", "message": "Rollback completo executado." if ok else "Rollback pendente. Aguarde e tente Restaurar tudo novamente.", "data": data})
 
 
 def build_parser() -> argparse.ArgumentParser:

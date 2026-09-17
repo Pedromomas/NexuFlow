@@ -1,0 +1,23 @@
+{
+  "status": "pending",
+  "test_id": "",
+  "tested_at": null,
+  "tester": "",
+  "nexuflow_version": "2.1.0-beta.4",
+  "installer_sha256": "",
+  "windows_version_and_build": "",
+  "windows_account_type": "",
+  "network_adapter_model": "",
+  "connection": "",
+  "game_name": "",
+  "game_build": "",
+  "anticheat_version": "",
+  "requested_mode": "",
+  "effective_policy": "",
+  "scenario": "",
+  "expected_result": "",
+  "observed_result": "",
+  "rollback_confirmed": null,
+  "evidence_redacted": [],
+  "note": "Do not include IP, MAC, hardware ID, account email, tokens or game memory dumps. pending is not passed."
+}

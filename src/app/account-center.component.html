@@ -7,21 +7,21 @@
   <div>
     <span class="eyebrow">CORE GRATUITO PARA SEMPRE</span>
     <h2>Uma conta simples, sem transformar o NexuFlow em peso.</h2>
-    <p>Login e licença são consultados antes do BOOST e ficam quietos durante partidas protegidas. Senha, cartão e PIX nunca são armazenados no aplicativo.</p>
+    <p>Teste de entrada com contas já criadas. Novos cadastros e cobranças reais ainda não estão liberados. Sua senha é enviada por HTTPS ao serviço NexuFlow para autenticação no Firebase. A coleção cosmética e o Safe Core continuam funcionando sem conta.</p>
   </div>
-  <div class="account-safety"><span>✓ E-mail mínimo</span><span>✓ Sessão curta em memória</span><span>✓ Mercado Pago externo</span><span>✓ Exclusão de conta</span></div>
+  <div class="account-safety"><span>E-mail e senha</span><span>Sessão em memória</span><span>PagBank em preparação</span><span>Controle da conta</span></div>
 </section>
 
 <div class="account-grid" *ngIf="!account.authenticated; else signedIn">
   <section class="account-form glass">
     <div class="account-tabs" role="tablist" aria-label="Acesso à conta">
       <button type="button" role="tab" [class.active]="mode === 'login'" (click)="setMode('login')">Entrar</button>
-      <button type="button" role="tab" [class.active]="mode === 'register'" (click)="setMode('register')">Criar conta</button>
+      <button type="button" role="tab" [disabled]="!account.registrationEnabled" [class.active]="mode === 'register'" (click)="setMode('register')">Criar conta</button>
     </div>
 
     <div class="account-lock" *ngIf="!account.configured">
       <b>Cadastro ainda não foi aberto</b>
-      <span>A tela e a segurança estão prontas, mas nenhum dado será coletado até o backend HTTPS, a política de privacidade e o Mercado Pago passarem pelos testes finais.</span>
+      <span>A implementação está preparada, mas ainda falta publicar o servidor HTTPS, as políticas e as credenciais de produção. Nenhum dado é coletado enquanto isso.</span>
     </div>
 
     <form (ngSubmit)="submit()" novalidate>
@@ -30,6 +30,7 @@
       <label><span>Senha</span><input name="password" [(ngModel)]="password" type="password" maxlength="128" [autocomplete]="mode === 'register' ? 'new-password' : 'current-password'" [disabled]="!account.configured" placeholder="Mínimo de 10 caracteres"></label>
       <label class="terms-check" *ngIf="mode === 'register'"><input name="acceptedTerms" type="checkbox" [(ngModel)]="acceptedTerms" [disabled]="!account.configured"><span>Li os <a *ngIf="account.termsUrl" [href]="account.termsUrl" target="_blank" rel="noopener noreferrer">termos</a><ng-container *ngIf="!account.termsUrl">termos</ng-container> e a <a *ngIf="account.privacyPolicyUrl" [href]="account.privacyPolicyUrl" target="_blank" rel="noopener noreferrer">política de privacidade</a><ng-container *ngIf="!account.privacyPolicyUrl">política de privacidade</ng-container>.</span></label>
       <button class="account-submit" type="submit" [disabled]="!account.configured || account.state === 'busy'">{{ account.state === 'busy' ? 'Aguarde…' : mode === 'register' ? 'Criar conta segura' : 'Entrar' }}</button>
+      <button *ngIf="mode === 'login'" class="ghost account-reset" type="button" (click)="resetPassword()" [disabled]="!account.configured || account.state === 'busy'">Esqueci minha senha</button>
     </form>
     <p class="account-message" role="status">{{ account.message }}</p>
   </section>
@@ -38,19 +39,21 @@
     <div class="account-section-head"><div><span class="eyebrow">ESCOLHA DEPOIS DO TESTE</span><h2>Planos avançados</h2></div><span>sem cartão no trial</span></div>
     <div class="account-plan-list">
       <button type="button" *ngFor="let plan of subscription.plans" [class.selected]="selectedPlan === plan.id" (click)="choosePlan(plan.id)">
-        <span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ plan.priceBrl }}</strong>
+        <span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ subscription.formatPrice(plan.priceBrl) }}</strong>
       </button>
     </div>
-    <div class="plan-boundary"><b>O pagamento só começa depois</b><span>Primeiro a pessoa testa o resultado. O checkout final será aberto no domínio oficial do Mercado Pago.</span></div>
+    <div class="plan-boundary"><b>Cobranças desativadas</b><span>PagBank em integração. Testes administrativos não concedem uma assinatura real.</span></div>
   </section>
 </div>
 
 <ng-template #signedIn>
   <div class="account-grid signed-in-grid">
     <section class="profile-card-live glass">
-      <div class="profile-avatar">{{ account.profile?.displayName?.slice(0, 1)?.toUpperCase() }}</div>
-      <div><span class="eyebrow">PERFIL VERIFICADO</span><h2>{{ account.profile?.displayName }}</h2><p>{{ account.profile?.email }}</p></div>
+      <img class="profile-avatar" [src]="avatar" alt="Avatar do tema equipado" width="52" height="52">
+      <div><span class="eyebrow">{{ account.profile?.emailVerified ? 'PERFIL VERIFICADO' : 'CONFIRMAÇÃO PENDENTE' }}</span><h2>{{ account.profile?.displayName }}</h2><p>{{ account.profile?.email }}</p></div>
       <button type="button" class="ghost" (click)="account.logout()">Sair</button>
+      <button *ngIf="!account.profile?.emailVerified" type="button" class="ghost" (click)="account.resendVerification()" [disabled]="account.state === 'busy'">Enviar confirmação de e-mail</button>
+      <p role="status">{{ account.message }}</p>
       <div class="profile-facts"><span><small>PLANO</small><b>{{ account.profile?.plan }}</b></span><span><small>STATUS</small><b>{{ account.profile?.subscriptionStatus }}</b></span><span><small>E-MAIL</small><b>{{ account.profile?.emailVerified ? 'Verificado' : 'Pendente' }}</b></span></div>
     </section>
     <section class="duo-manager glass">
@@ -58,24 +61,28 @@
       <label><span>E-mail do amigo</span><input [(ngModel)]="inviteEmail" inputmode="email" autocomplete="email" placeholder="amigo@email.com"></label>
       <button type="button" class="account-submit" (click)="invite()" [disabled]="account.state === 'busy'">Enviar convite</button>
       <small *ngIf="account.profile?.duoInviteEmail as invitedEmail">Convite atual: {{ invitedEmail }}</small>
+      <button *ngIf="account.profile?.duoInviteEmail" type="button" class="ghost" (click)="removeDuo()" [disabled]="account.state === 'busy'">Remover amigo</button>
     </section>
     <section class="billing-manager glass">
       <span class="eyebrow">ASSINATURA</span><h2>Escolha o acesso avançado</h2>
       <div class="account-plan-list compact">
-        <button type="button" *ngFor="let plan of subscription.plans" [class.selected]="selectedPlan === plan.id" (click)="choosePlan(plan.id)"><span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ plan.priceBrl }}</strong></button>
+        <button type="button" *ngFor="let plan of subscription.plans" [class.selected]="selectedPlan === plan.id" (click)="choosePlan(plan.id)"><span><small>{{ plan.label }}</small><b>{{ plan.durationLabel }}</b></span><strong><sup>R$</sup>{{ subscription.formatPrice(plan.priceBrl) }}</strong></button>
       </div>
-      <button type="button" class="account-submit" (click)="checkout()" [disabled]="account.state === 'busy'">Continuar no Mercado Pago</button>
+      <button type="button" class="account-submit" disabled>Pagamentos em preparação</button>
     </section>
     <section class="account-danger glass">
-      <div><span class="eyebrow">CONTROLE DOS SEUS DADOS</span><h2>Excluir minha conta</h2><p>A solicitação precisa ser confirmada pelo e-mail verificado. O aplicativo não apaga silenciosamente nem mantém uma sessão escondida.</p></div>
-      <button type="button" (click)="deleteAccount()" [class.armed]="deleteArmed" [disabled]="account.state === 'busy'">{{ deleteArmed ? 'Confirmar solicitação' : 'Solicitar exclusão' }}</button>
+      <div><span class="eyebrow">CONTROLE DOS SEUS DADOS</span><h2>Excluir minha conta</h2><p>A exclusão exige login recente e confirmação. Remove a identidade e o perfil; alguns registros técnicos e identificadores derivados podem permanecer. Isso não garante anonimização nem remoção imediata de backups. Contato: guilhermefudido5@gmail.com.</p></div>
+      <button type="button" class="export-data" (click)="exportAccount()" [disabled]="account.state === 'busy'">Baixar meus dados</button>
+      <button type="button" (click)="deleteAccount()" [class.armed]="deleteArmed" [disabled]="account.state === 'busy'">{{ deleteArmed ? 'Excluir definitivamente' : 'Quero excluir minha conta' }}</button>
     </section>
   </div>
 </ng-template>
 
+<app-admin-center *ngIf="account.authenticated && account.profile?.isAdmin"></app-admin-center>
+
 <section class="account-principles glass">
-  <article><b>Senha</b><span>Hash Argon2id apenas no servidor. Nunca texto puro.</span></article>
-  <article><b>Pagamento</b><span>Cartão e PIX ficam inteiramente no Mercado Pago.</span></article>
+  <article><b>Senha</b><span>Gerenciada pelo Firebase Authentication; o NexuFlow não cria um banco próprio de senhas.</span></article>
+  <article><b>Pagamento</b><span>PagBank em testes separados. Cobranças reais desativadas.</span></article>
   <article><b>Desempenho</b><span>Validação curta antes ou depois da partida, nunca durante.</span></article>
   <article><b>LGPD</b><span>Coleta mínima, transparência e caminho de exclusão.</span></article>
 </section>

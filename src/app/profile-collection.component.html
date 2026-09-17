@@ -1,0 +1,18 @@
+<section class="collector" aria-labelledby="collector-title">
+  <header class="collector-heading"><div><span>SEU UNIVERSO NEXUFLOW</span><h1 id="collector-title">Perfil de explorador</h1></div><span class="local-tag">Neste computador</span></header>
+  <div class="collector-passport" [style.--passport-art]="active ? 'url(' + active.artwork + ')' : 'none'">
+    <div class="portrait-frame"><img [src]="avatar" alt="Avatar do tema equipado" width="152" height="152"><img *ngIf="active" class="pinned-badge" [src]="active.badge" [alt]="'Insígnia ' + active.title" width="62" height="62"></div>
+    <div class="collector-identity"><span>PASSAPORTE DO FLUXO / 01</span><h2>{{ name }}</h2><p>{{ active?.title || 'Flux · edição essencial' }}</p><button type="button" (click)="editing = !editing" [attr.aria-expanded]="editing">Editar apelido</button></div>
+    <div class="collection-counter"><strong>{{ collected }}<small>/{{ rewards.length }}</small></strong><span>insígnias descobertas</span><div role="progressbar" [attr.aria-valuenow]="collected" [attr.aria-valuemax]="rewards.length" aria-valuemin="0" aria-label="Insígnias descobertas"><i [style.width.%]="rewards.length ? collected / rewards.length * 100 : 0"></i></div></div>
+  </div>
+  <form *ngIf="editing" class="nickname-form" (ngSubmit)="saveName()"><label for="collector-name">Apelido público neste aparelho</label><input id="collector-name" name="nickname" [(ngModel)]="name" maxlength="32" autocomplete="off"><button type="submit">Salvar apelido</button></form>
+  <p class="saved-message" role="status">{{ saved }}</p>
+  <div class="collection-heading"><div><span>UM CÓDIGO. UM UNIVERSO.</span><h2>Sua coleção secreta</h2><p>Cada descoberta libera uma insígnia, um avatar e a identidade completa daquele tema.</p></div><button type="button" (click)="redeem.emit()">+ Resgatar código</button></div>
+  <div class="badge-gallery">
+    <article *ngFor="let reward of rewards" class="badge-card" [class.locked]="!reward.unlocked" [class.equipped]="reward.theme === activeTheme" [attr.data-reward]="reward.id">
+      <div class="badge-scene"><img *ngIf="reward.unlocked" [src]="reward.badge" [alt]="'Insígnia ' + reward.title" width="128" height="128"><span class="unknown-badge" *ngIf="!reward.unlocked" aria-label="Insígnia ainda não descoberta">?</span><span class="badge-edition">{{ reward.id === 'origin' ? 'I / PRISMA' : reward.id === 'rio' ? 'II / PULSO' : 'III / GUARDIÃO' }}</span></div>
+      <div class="badge-details"><h3>{{ reward.title }}</h3><p>{{ reward.unlocked ? 'Insígnia conquistada · avatar liberado' : 'Um código próprio revela esta descoberta.' }}</p><button type="button" *ngIf="reward.unlocked" (click)="equipReward(reward)" [disabled]="reward.theme === activeTheme">{{ reward.theme === activeTheme ? '✓ Universo equipado' : 'Equipar universo' }}</button><button type="button" *ngIf="!reward.unlocked" (click)="redeem.emit()">Encontrar meu código</button></div>
+    </article>
+  </div>
+  <p class="collection-note">Coleção gratuita e local, sem vantagem competitiva. Não é assinatura, nem prova de compra. A sincronização entre computadores ainda não está disponível. Os modos de proteção continuam iguais em todos os temas.</p>
+</section>
