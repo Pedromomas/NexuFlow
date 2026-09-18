@@ -1,4 +1,6 @@
-# Bloqueadores da versão estável — atualizado em 17/09/2026
+# Registro de validações pendentes — lançamento 2.1.0 em 18/09/2026
+
+O responsável autorizou o lançamento oficial 2.1.0 após relatar funcionamento no seu computador. Isso não conclui a matriz física abaixo nem certifica compatibilidade com anticheats. A lista histórica permanece para transparência: repositório e artefatos já estão públicos, e a RC.2 passou nos testes automatizados e na verificação criptográfica independente, inclusive rejeição de alterações em memória. Upgrade real e partidas não foram comprovados. As pendências não devem ser apresentadas como testes aprovados.
 
 Estado desta lista: pendências, não certificação. Edição Comunidade totalmente gratuita. Publicação do repositório será uma etapa posterior, após revisão dos arquivos e do histórico.
 

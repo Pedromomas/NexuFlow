@@ -24,13 +24,13 @@ $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $OutputD
 @"
 # NexuFlow $version
 
-Community pre-release: all implemented features are free. Not validated as a stable release.
+Community edition: all implemented features are free. The release channel does not certify physical, live-match or real-upgrade validation.
 
 Installer: $name
 SHA-256: $hash
 Authenticode: $signature
 
-See docs/RELEASE_COMMUNITY_RC2.md and docs/STABLE_GATES.md for changes and pending physical checks.
+See docs/RELEASE_2_1_0.md and docs/STABLE_GATES.md for changes and pending physical checks.
 The accompanying SBOM includes build/test dependencies; it is not a reachability analysis.
 "@ | Set-Content -LiteralPath (Join-Path $OutputDirectory 'RELEASE-NOTES.md') -Encoding utf8
 Write-Host "Evidence generated; physical validation is still pending."

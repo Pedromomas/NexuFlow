@@ -2,15 +2,15 @@
 
 # ⚡ NexuFlow
 
-## Download para Windows — versão mais recente: 2.1.0-rc.2
+## Download para Windows — versão oficial: 2.1.0
 
-**[⬇ BAIXAR O INSTALADOR .EXE — Windows 64 bits](https://github.com/Pedromomas/NexuFlow/releases/download/v2.1.0-rc.2/NexuFlow_2.1.0-rc.2_x64-setup.exe)**
+**[⬇ BAIXAR O INSTALADOR .EXE — Windows 64 bits](https://github.com/Pedromomas/NexuFlow/releases/download/v2.1.0/NexuFlow_2.1.0_x64-setup.exe)**
 
-[Release, tag e todos os arquivos](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0-rc.2) · Tag: `v2.1.0-rc.2`
+[Release, tag e todos os arquivos](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0) · Tag: `v2.1.0`
 
-Edição gratuita com apoio Pix voluntário. Pré-release em validação; o selo “Latest” de versões estáveis antigas não indica o instalador mais novo. O arquivo correto é `NexuFlow_2.1.0-rc.2_x64-setup.exe`, não “Source code”.
+Edição gratuita com apoio Pix voluntário. O arquivo correto é `NexuFlow_2.1.0_x64-setup.exe`, não “Source code”. Lançamento oficial autorizado pelo responsável; consulte as limitações conhecidas nas notas da versão.
 
-**Edição Comunidade — 100% gratuita.** Todas as funções implementadas estão disponíveis sem conta, assinatura, trial ou licença paga. Códigos secretos são cosméticos gratuitos. As proteções durante partidas continuam obrigatórias. A versão 2.1 está em revisão para lançamento; não é certificada por fabricantes de anticheat.
+**Edição Comunidade — 100% gratuita.** Todas as funções implementadas estão disponíveis sem conta, assinatura, trial ou licença paga. Códigos secretos são cosméticos gratuitos. As proteções durante partidas continuam obrigatórias. A versão 2.1 não é certificada por fabricantes de anticheat.
 
 ### Performance, diagnóstico de latência e segurança para jogos competitivos no Windows
 
@@ -19,9 +19,9 @@ Edição gratuita com apoio Pix voluntário. Pré-release em validação; o selo
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
 ![Safety First](https://img.shields.io/badge/Safety-Anti--cheat%20first-31C48D?style=for-the-badge&logo=shield&logoColor=white)
 
-**Versão em validação: 2.1 — Edição Comunidade**
+**Versão oficial: 2.1.0 — Edição Comunidade**
 
-[Baixar a versão de revisão 2.1.0-rc.2](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0-rc.2) · [Limitações e testes pendentes](docs/STABLE_GATES.md) · [Relatar vulnerabilidade](SECURITY.md)
+[Baixar a versão 2.1.0](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0) · [Limitações e testes pendentes](docs/STABLE_GATES.md) · [Relatar vulnerabilidade](SECURITY.md)
 
 Safe Core obrigatório e independente da automação, entrada direta sem cadastro, Central do PC, três temas secretos, DNS comparativo e speed test limitado. O atualizador exige pacotes assinados, mas a distribuição pública ainda depende de publicação e validação. Veja [a revisão da edição gratuita](docs/COMMUNITY_REVIEW_20260917.md). Documentos anteriores sobre contas e monetização são históricos e não definem a edição atual.
 
