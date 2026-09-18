@@ -2,6 +2,14 @@
 
 # ⚡ NexuFlow
 
+## Download para Windows — versão mais recente: 2.1.0-rc.2
+
+**[⬇ BAIXAR O INSTALADOR .EXE — Windows 64 bits](https://github.com/Pedromomas/NexuFlow/releases/download/v2.1.0-rc.2/NexuFlow_2.1.0-rc.2_x64-setup.exe)**
+
+[Release, tag e todos os arquivos](https://github.com/Pedromomas/NexuFlow/releases/tag/v2.1.0-rc.2) · Tag: `v2.1.0-rc.2`
+
+Edição gratuita com apoio Pix voluntário. Pré-release em validação; o selo “Latest” de versões estáveis antigas não indica o instalador mais novo. O arquivo correto é `NexuFlow_2.1.0-rc.2_x64-setup.exe`, não “Source code”.
+
 **Edição Comunidade — 100% gratuita.** Todas as funções implementadas estão disponíveis sem conta, assinatura, trial ou licença paga. Códigos secretos são cosméticos gratuitos. As proteções durante partidas continuam obrigatórias. A versão 2.1 está em revisão para lançamento; não é certificada por fabricantes de anticheat.
 
 ### Performance, diagnóstico de latência e segurança para jogos competitivos no Windows
